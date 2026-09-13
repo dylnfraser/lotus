@@ -28,5 +28,5 @@ Lotus is a native, lightweight macOS web browser built entirely in Swift and Swi
 
 Clone the repository:
 ```sh
-git clone [https://github.com/dylanfraser/Lotus.git](https://github.com/dylanfraser/Lotus.git)
+git clone https://github.com/dylanfraser/Lotus.git
 cd Lotus
