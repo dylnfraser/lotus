@@ -11,6 +11,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     static weak var sharedBrowserState: BrowserState?
     static var isForcedTermination: Bool = false
 
+    private static var pendingMainURLs: [URL] = []
+    private static var pendingPrivateURLs: [URL] = []
+    private static let pendingURLQueue = DispatchQueue(label: "lotus.pendingURLs")
+
+    static func enqueuePendingURL(_ url: URL, isPrivate: Bool) {
+        pendingURLQueue.sync {
+            if isPrivate {
+                pendingPrivateURLs.append(url)
+            } else {
+                pendingMainURLs.append(url)
+            }
+        }
+    }
+
+    static func dequeuePendingURL(isPrivate: Bool) -> URL? {
+        pendingURLQueue.sync {
+            if isPrivate {
+                return pendingPrivateURLs.isEmpty ? nil : pendingPrivateURLs.removeFirst()
+            } else {
+                return pendingMainURLs.isEmpty ? nil : pendingMainURLs.removeFirst()
+            }
+        }
+    }
+
     override init() {
         super.init()
         NSWindow.allowsAutomaticWindowTabbing = false

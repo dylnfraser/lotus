@@ -12,7 +12,6 @@ struct ProfileSwitcherView: View {
     @ObservedObject var browserState: BrowserState
     @Environment(\.colorScheme) private var colorScheme
     @State private var isHovered: Bool = false
-    @State private var isCreateProfileSheetPresented: Bool = false
 
     private var profile: Profile {
         browserState.currentProfile
@@ -42,7 +41,7 @@ struct ProfileSwitcherView: View {
             Divider()
 
             Button {
-                isCreateProfileSheetPresented = true
+                browserState.openCreateProfile()
             } label: {
                 Label("New Profile…", systemImage: "plus")
             }
@@ -96,22 +95,6 @@ struct ProfileSwitcherView: View {
             withAnimation(.easeInOut(duration: 0.12)) {
                 isHovered = hovering
             }
-        }
-        .sheet(isPresented: $isCreateProfileSheetPresented) {
-            CreateProfileModalView(
-                onSave: { newName, newIcon, newColor in
-                    let created = browserState.createProfile(
-                        name: newName,
-                        icon: newIcon,
-                        color: newColor
-                    )
-                    browserState.switchProfile(to: created.id)
-                    isCreateProfileSheetPresented = false
-                },
-                onCancel: {
-                    isCreateProfileSheetPresented = false
-                }
-            )
         }
     }
 }

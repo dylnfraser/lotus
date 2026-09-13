@@ -113,17 +113,17 @@ extension BrowserState {
         urlCopyFeedbackDismissalWorkItem?.cancel()
 
         let feedback = URLCopyFeedback(id: UUID(), tabId: tabId, outcome: outcome)
-        withAnimation(.spring(response: 0.40, dampingFraction: 0.84)) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.78)) {
             urlCopyFeedback = feedback
         }
 
         let dismissal = DispatchWorkItem { [weak self] in
             guard self?.urlCopyFeedback?.id == feedback.id else { return }
-            withAnimation(.easeInOut(duration: 0.32)) {
+            withAnimation(.easeInOut(duration: 0.20)) {
                 self?.urlCopyFeedback = nil
             }
         }
         urlCopyFeedbackDismissalWorkItem = dismissal
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.15, execute: dismissal)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25, execute: dismissal)
     }
 }

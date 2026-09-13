@@ -17,10 +17,11 @@ final class ContentBlockerService: ObservableObject {
 
     private static let userDefaultsKey = "lotus.browser.contentBlocker.settings"
 
-    // MARK: - Published State
+    private var isRestoringSettings = false
 
     @Published var isAdBlockingEnabled: Bool = true {
         didSet {
+            guard !isRestoringSettings else { return }
             saveSettings()
             notifyConfigurationsChanged()
         }
@@ -46,6 +47,7 @@ final class ContentBlockerService: ObservableObject {
 
     @Published var allowlistedDomains: Set<String> = [] {
         didSet {
+            guard !isRestoringSettings else { return }
             saveSettings()
             recompileAllowlist()
         }
@@ -117,6 +119,9 @@ final class ContentBlockerService: ObservableObject {
     // MARK: - Settings Persistence
 
     private func loadSettings() {
+        isRestoringSettings = true
+        defer { isRestoringSettings = false }
+
         if let data = UserDefaults.standard.data(forKey: Self.userDefaultsKey),
            let settings = try? JSONDecoder().decode(ContentBlockerSettings.self, from: data) {
             self.isAdBlockingEnabled = settings.isAdBlockingEnabled
@@ -148,6 +153,7 @@ final class ContentBlockerService: ObservableObject {
     }
 
     private func saveSettings() {
+        guard !isRestoringSettings else { return }
         let settings = ContentBlockerSettings(
             isAdBlockingEnabled: isAdBlockingEnabled,
             blockTrackersEnabled: blockTrackersEnabled,

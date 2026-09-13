@@ -139,7 +139,7 @@ private struct SplitTabHalf: View {
     }
 
     private var isInternalPage: Bool {
-        tab.url?.scheme == "lotus" || tab.url?.absoluteString.hasPrefix("lotus://") == true
+        tab.url?.isLotusPage == true
     }
 
     private var sidebarForeground: Color {
@@ -215,7 +215,7 @@ private struct SplitTabHalf: View {
 
             Button(action: onClose) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 8.5, weight: .bold))
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundColor(isSplitActive ? selectedForegroundSecondary : sidebarForegroundSecondary)
                     .animation(.easeInOut(duration: 0.16), value: isSplitActive)
                     .frame(width: 14, height: 14)

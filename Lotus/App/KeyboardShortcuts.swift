@@ -192,9 +192,6 @@ enum LotusShortcuts {
         LotusShortcut("nextTabControlTab", key: .tab, modifiers: .control, action: animated {
             $0.selectNextTab()
         }),
-        LotusShortcut("nextTabCommandTab", key: .tab, modifiers: .command, action: animated {
-            $0.selectNextTab()
-        }),
         LotusShortcut("nextTabBracket", key: "]", modifiers: [.command, .shift], action: animated {
             $0.selectNextTab()
         }),
@@ -202,9 +199,6 @@ enum LotusShortcuts {
             $0.selectNextTab()
         }),
         LotusShortcut("previousTabControlTab", key: .tab, modifiers: [.control, .shift], action: animated {
-            $0.selectPreviousTab()
-        }),
-        LotusShortcut("previousTabCommandTab", key: .tab, modifiers: [.command, .shift], action: animated {
             $0.selectPreviousTab()
         }),
         LotusShortcut("previousTabBracket", key: "[", modifiers: [.command, .shift], action: animated {
@@ -341,24 +335,7 @@ enum KeyboardShortcutRouter {
             return nil
         }
 
-        // 3. Popup open confirmation modal keyboard handling (Enter / Esc)
-        if browserState.pendingPopupRequest != nil {
-            if event.keyCode == 36 || event.keyCode == 76 { // Return / Enter
-                DispatchQueue.main.async {
-                    browserState.confirmOpenPopup()
-                }
-                return nil
-            }
-            if event.keyCode == 53 { // Escape
-                DispatchQueue.main.async {
-                    browserState.cancelOpenPopup()
-                }
-                return nil
-            }
-            return nil
-        }
-
-        // 4. Delete profile confirmation modal keyboard handling (Enter / Esc)
+        // 3. Delete profile confirmation modal keyboard handling (Enter / Esc)
         if browserState.profileToDeleteConfirmation != nil {
             if event.keyCode == 36 || event.keyCode == 76 { // Return / Enter
                 DispatchQueue.main.async {
@@ -373,6 +350,24 @@ enum KeyboardShortcutRouter {
                 return nil
             }
             return nil
+        }
+
+        // Profile editing/creation modal keyboard handling (Esc)
+        if browserState.profileToEdit != nil {
+            if event.keyCode == 53 { // Escape
+                DispatchQueue.main.async {
+                    browserState.closeProfileEditor()
+                }
+                return nil
+            }
+        }
+        if browserState.isCreatingProfile {
+            if event.keyCode == 53 { // Escape
+                DispatchQueue.main.async {
+                    browserState.closeCreateProfile()
+                }
+                return nil
+            }
         }
 
         // 5. Clear all data confirmation modal keyboard handling (Enter / Esc)

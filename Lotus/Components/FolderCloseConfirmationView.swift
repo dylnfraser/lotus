@@ -21,26 +21,22 @@ struct FolderCloseConfirmationView: View {
     }
 
     var body: some View {
-        guard let folder = folder, let folderId = browserState.folderToCloseConfirmation else {
-            return AnyView(EmptyView())
-        }
-
-        return AnyView(
+        if let folder = folder, let folderId = browserState.folderToCloseConfirmation {
             LotusConfirmationDialog(
                 iconStyle: .custom(
                     gradient: LinearGradient(colors: [folder.color.color.opacity(0.9), folder.color.color], startPoint: .top, endPoint: .bottom),
                     systemImage: "folder.fill"
                 ),
-                title: "Close \"\(folder.name)\"?",
+                title: "Close “\(folder.name)”?",
                 subtitle: "This will close \(tabCount == 1 ? "the tab" : "all \(tabCount) tabs") inside this folder.",
                 onCancel: { browserState.cancelCloseFolder() }
             ) {
                 EmptyView()
-            } actions: {
-                LotusDialogSecondaryButton(title: "Keep tabs") {
+            } secondaryActions: {
+                LotusDialogSecondaryButton(title: "Keep Tabs") {
                     browserState.confirmCloseFolder(id: folderId, keepTabs: true)
                 }
-
+            } actions: {
                 LotusDialogCancelButton {
                     browserState.cancelCloseFolder()
                 }
@@ -49,6 +45,6 @@ struct FolderCloseConfirmationView: View {
                     browserState.confirmCloseFolder(id: folderId, keepTabs: false)
                 }
             }
-        )
+        }
     }
 }

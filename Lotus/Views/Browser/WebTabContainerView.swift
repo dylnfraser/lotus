@@ -18,19 +18,23 @@ struct WebTabContainerView: NSViewRepresentable {
 
     private var isInternalLotusPage: Bool {
         let url = browserState.url(for: activeTabId)
-        return url?.scheme == "lotus" || url?.absoluteString.hasPrefix("lotus://") == true
+        return url?.isLotusPage == true
     }
 
     func makeNSView(context: Context) -> WebTabHostNSView {
         let hostView = WebTabHostNSView()
-        if !isInternalLotusPage {
+        if isInternalLotusPage {
+            hostView.detachActiveWebView()
+        } else {
             hostView.updateActiveWebView(browserState.getWebView(for: activeTabId))
         }
         return hostView
     }
 
     func updateNSView(_ nsView: WebTabHostNSView, context: Context) {
-        if !isInternalLotusPage {
+        if isInternalLotusPage {
+            nsView.detachActiveWebView()
+        } else {
             nsView.updateActiveWebView(browserState.getWebView(for: activeTabId))
         }
     }
@@ -56,6 +60,13 @@ final class WebTabHostNSView: NSView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func detachActiveWebView() {
+        guard let webView = currentWebView else { return }
+        webView.isHidden = true
+        webView.removeFromSuperview()
+        currentWebView = nil
     }
 
     func updateActiveWebView(_ newWebView: WKWebView) {

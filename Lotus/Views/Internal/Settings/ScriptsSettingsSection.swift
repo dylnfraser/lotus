@@ -41,7 +41,7 @@ struct ScriptsSettingsSection: View {
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(foregroundPrimary)
                             Text("Inject custom CSS or JavaScript into matching websites")
-                                .font(.system(size: 11.5))
+                                .font(.system(size: 11))
                                 .foregroundColor(foregroundSecondary)
                         }
                         Spacer()
@@ -72,20 +72,17 @@ struct ScriptsSettingsSection: View {
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(foregroundPrimary)
                         Text("Write CSS or JavaScript to run on matching domains")
-                            .font(.system(size: 11.5))
+                            .font(.system(size: 11))
                             .foregroundColor(foregroundSecondary)
                     }
                     Spacer()
-                    Button {
+                    LotusSettingsButton(
+                        title: "New Script…",
+                        systemImage: "plus",
+                        isDisabled: !service.isEnabled
+                    ) {
                         isCreating = true
-                    } label: {
-                        Text("New Script...")
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .disabled(!service.isEnabled)
-                    .focusable(false)
-                    .focusEffectDisabled()
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
@@ -170,8 +167,6 @@ struct ScriptsSettingsSection: View {
                     .foregroundColor(foregroundSecondary)
             }
             .buttonStyle(.plain)
-            .focusable(false)
-            .focusEffectDisabled()
 
             // Delete button
             Button {
@@ -184,8 +179,6 @@ struct ScriptsSettingsSection: View {
                     .foregroundColor(Color(nsColor: .systemRed).opacity(0.70))
             }
             .buttonStyle(.plain)
-            .focusable(false)
-            .focusEffectDisabled()
         }
         .padding(.horizontal, 14)
         .frame(height: 50)

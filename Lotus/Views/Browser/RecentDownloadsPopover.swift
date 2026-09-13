@@ -38,7 +38,7 @@ struct RecentDownloadsPopover: View {
             // Header
             HStack(alignment: .center) {
                 Text("Downloads")
-                    .font(.system(size: 13.5, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(foregroundPrimary)
 
                 Spacer()
@@ -51,7 +51,6 @@ struct RecentDownloadsPopover: View {
                         .foregroundColor(hasCompletedDownloads ? Color.accentColor : foregroundSecondary.opacity(0.5))
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
                 .disabled(!hasCompletedDownloads)
             }
             .padding(.horizontal, 14)
@@ -100,7 +99,7 @@ struct RecentDownloadsPopover: View {
                 browserState.addTabBelow(title: "Downloads", url: .lotusDownloads, select: true)
             } label: {
                 HStack(spacing: 6) {
-                    Text("Show All Downloads...")
+                    Text("Show All Downloads…")
                         .font(.system(size: 12, weight: .medium))
                     Spacer()
                     Image(systemName: "arrow.up.right")
@@ -113,13 +112,11 @@ struct RecentDownloadsPopover: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .focusable(false)
         }
         .frame(width: 320)
         .background(
             VisualEffectView(material: .popover, blendingMode: .withinWindow)
         )
-        .focusable(false)
     }
 
     // MARK: - Row
@@ -135,13 +132,13 @@ struct RecentDownloadsPopover: View {
                 // File icon
                 Image(systemName: item.systemIconName)
                     .font(.system(size: 18, weight: .regular))
-                    .foregroundColor(item.state == .failed ? Color.red.opacity(0.85) : Color.accentColor)
+                    .foregroundColor(item.state == .failed ? Color(nsColor: .systemRed).opacity(0.85) : Color.accentColor)
                     .frame(width: 24, height: 24)
 
                 // Info
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.filename)
-                        .font(.system(size: 12.5, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(foregroundPrimary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -157,7 +154,7 @@ struct RecentDownloadsPopover: View {
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundColor(Color.accentColor)
                             } else {
-                                Text("• Downloading...")
+                                Text("• Downloading…")
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundColor(Color.accentColor)
                             }
@@ -170,11 +167,11 @@ struct RecentDownloadsPopover: View {
                         } else if item.state == .paused {
                             Text("• Paused")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(Color.orange.opacity(0.9))
+                                .foregroundColor(Color(nsColor: .systemOrange).opacity(0.9))
                         } else if item.state == .failed {
                             Text("• Failed")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(Color.red.opacity(0.85))
+                                .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
                         } else if item.state == .cancelled {
                             Text("• Cancelled")
                                 .font(.system(size: 11, weight: .medium))
@@ -206,14 +203,13 @@ struct RecentDownloadsPopover: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
                     .help("Pause Download")
 
                     Button {
                         browserState.cancelDownload(id: item.id)
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 9.5, weight: .bold))
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundColor(foregroundSecondary)
                             .padding(5)
                             .background(
@@ -222,7 +218,6 @@ struct RecentDownloadsPopover: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
                     .help("Cancel Download")
                 } else if item.state == .paused {
                     Button {
@@ -238,14 +233,13 @@ struct RecentDownloadsPopover: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
                     .help("Resume Download")
 
                     Button {
                         browserState.cancelDownload(id: item.id)
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 9.5, weight: .bold))
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundColor(foregroundSecondary)
                             .padding(5)
                             .background(
@@ -254,14 +248,13 @@ struct RecentDownloadsPopover: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
                     .help("Cancel Download")
                 } else if item.state == .failed || item.state == .cancelled {
                     Button {
                         browserState.retryDownload(id: item.id)
                     } label: {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 10.5, weight: .medium))
+                            .font(.system(size: 11, weight: .medium))
                             .foregroundColor(Color.accentColor)
                             .padding(5)
                             .background(
@@ -270,7 +263,6 @@ struct RecentDownloadsPopover: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
                     .help("Retry Download")
                 } else {
                     Button {
@@ -286,7 +278,6 @@ struct RecentDownloadsPopover: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
                     .help("Show in Finder")
                 }
             }
@@ -300,7 +291,6 @@ struct RecentDownloadsPopover: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .focusable(false)
         .onDrag {
             guard item.fileExists else { return NSItemProvider() }
             let provider = NSItemProvider(contentsOf: item.destinationURL) ?? NSItemProvider()

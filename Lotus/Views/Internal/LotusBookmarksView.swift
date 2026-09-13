@@ -94,12 +94,23 @@ struct LotusBookmarksView: View {
 
     // MARK: - Colors
 
+    private var activeAccentColor: Color {
+        if !browserState.isPrivate {
+            if browserState.currentProfile.color == .grey {
+                return Color(nsColor: .controlAccentColor)
+            }
+            return browserState.currentProfile.color.color
+        }
+        let accent = LotusAccentColor(rawValue: UserDefaults.standard.string(forKey: "lotus.browser.accentColor") ?? "white") ?? .white
+        return accent.color
+    }
+
     private var foregroundPrimary: Color {
         colorScheme == .dark ? .white : Color(nsColor: .labelColor)
     }
 
     private var foregroundSecondary: Color {
-        colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
+        colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor)
     }
 
     private var foregroundPlaceholder: Color {
@@ -107,15 +118,21 @@ struct LotusBookmarksView: View {
     }
 
     private var cardFill: Color {
-        colorScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.03)
+        colorScheme == .dark
+            ? Color.white.opacity(0.05)
+            : Color(nsColor: .controlBackgroundColor)
     }
 
     private var cardStroke: Color {
-        colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.08)
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     private var separatorColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.05)
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     // MARK: - Body
@@ -123,10 +140,10 @@ struct LotusBookmarksView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(.vertical, showsIndicators: true) {
-                LazyVStack(alignment: .leading, spacing: 26) {
+                LazyVStack(alignment: .leading, spacing: 22) {
                     headerSection
-                        .padding(.top, 40)
-                        .padding(.bottom, -4)
+                        .padding(.top, 32)
+                        .padding(.bottom, 4)
 
                     if sections.isEmpty {
                         emptyState
@@ -139,14 +156,18 @@ struct LotusBookmarksView: View {
                         Spacer(minLength: 40)
                     }
                 }
-                .frame(maxWidth: 680)
-                .padding(.horizontal, 32)
+                .frame(maxWidth: 640)
+                .padding(.horizontal, 24)
                 .frame(maxWidth: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.clear)
-        .focusEffectDisabled()
+        .tint(activeAccentColor)
+        .accentColor(activeAccentColor)
+        .background(
+            (colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.09) : Color(nsColor: .windowBackgroundColor))
+                .ignoresSafeArea()
+        )
         .transaction { $0.animation = nil }
         .sheet(isPresented: $isAddSheetPresented) {
             AddBookmarkSheet(browserState: browserState, profileId: activeProfileId)
@@ -193,43 +214,42 @@ struct LotusBookmarksView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 18) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(systemName: "bookmark.fill")
-                    .font(.system(size: 24, weight: .light))
-                    .foregroundColor(foregroundPrimary)
-
-                VStack(alignment: .leading, spacing: 1) {
+        VStack(spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Bookmarks")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 26, weight: .bold))
                         .foregroundColor(foregroundPrimary)
 
-                    Text("\(browserState.bookmarks(for: activeProfileId).count) bookmarks")
-                        .font(.system(size: 12, weight: .regular))
+                    let count = browserState.bookmarks(for: activeProfileId).count
+                    Text("\(count) \(count == 1 ? "bookmark" : "bookmarks") saved")
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(foregroundSecondary)
                 }
 
                 Spacer()
 
-                if isSelecting {
-                    BookmarkHeaderActionButton(
-                        title: "Delete \(selectedIds.count)",
-                        systemImage: "trash",
-                        isDestructive: true
-                    ) {
-                        deleteSelected()
-                    }
+                HStack(spacing: 8) {
+                    if isSelecting {
+                        LotusHeaderActionButton(
+                            title: "Delete \(selectedIds.count)",
+                            systemImage: "trash",
+                            isDestructive: true
+                        ) {
+                            deleteSelected()
+                        }
 
-                    BookmarkHeaderActionButton(title: "Cancel", systemImage: nil, isDestructive: false) {
-                        selectedIds.removeAll()
-                    }
-                } else {
-                    BookmarkHeaderActionButton(title: "Export", systemImage: "square.and.arrow.up", isDestructive: false) {
-                        exportBookmarks()
-                    }
+                        LotusHeaderActionButton(title: "Cancel", systemImage: nil, isDestructive: false) {
+                            selectedIds.removeAll()
+                        }
+                    } else {
+                        LotusHeaderActionButton(title: "Export", systemImage: "square.and.arrow.up", isDestructive: false) {
+                            exportBookmarks()
+                        }
 
-                    BookmarkHeaderActionButton(title: "Add Bookmark", systemImage: "plus", isDestructive: false) {
-                        isAddSheetPresented = true
+                        LotusHeaderActionButton(title: "Add Bookmark", systemImage: "plus", isDestructive: false) {
+                            isAddSheetPresented = true
+                        }
                     }
                 }
             }
@@ -237,7 +257,7 @@ struct LotusBookmarksView: View {
             // Search field
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(foregroundSecondary)
 
                 TextField(
@@ -261,13 +281,13 @@ struct LotusBookmarksView: View {
                 }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .frame(height: 42)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(cardFill)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(cardStroke, lineWidth: 1)
             )
         }
@@ -278,9 +298,10 @@ struct LotusBookmarksView: View {
     private func daySection(_ section: BookmarkSection) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(section.title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(foregroundSecondary)
-                .padding(.leading, 14)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(foregroundPrimary)
+                .padding(.leading, 2)
+                .padding(.top, 8)
 
             VStack(spacing: 0) {
                 ForEach(Array(section.items.enumerated()), id: \.element.id) { index, entry in
@@ -319,14 +340,14 @@ struct LotusBookmarksView: View {
                 }
             }
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(cardFill)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(cardStroke, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
@@ -486,9 +507,9 @@ private struct BookmarkRowView: View {
                         Button(action: onDelete) {
                             Image(systemName: "trash")
                                 .font(.system(size: 11))
-                                .foregroundColor(Color.red.opacity(0.85))
+                                .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
                                 .frame(width: 22, height: 22)
-                                .background(Circle().fill(Color.red.opacity(0.12)))
+                                .background(Circle().fill(Color(nsColor: .systemRed).opacity(0.12)))
                         }
                         .buttonStyle(.plain)
                         .help("Delete Bookmark")
@@ -580,59 +601,7 @@ private struct BookmarkSelectionCheckbox: View {
     }
 }
 
-// MARK: - Bookmark Header Action Button
 
-private struct BookmarkHeaderActionButton: View {
-    let title: String
-    let systemImage: String?
-    let isDestructive: Bool
-    let action: () -> Void
-
-    @State private var isHovered: Bool = false
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var foreground: Color {
-        if isDestructive {
-            return colorScheme == .dark ? Color(red: 1.0, green: 0.45, blue: 0.42) : Color(red: 0.85, green: 0.15, blue: 0.12)
-        }
-        if isHovered {
-            return colorScheme == .dark ? .white : Color(nsColor: .labelColor)
-        }
-        return colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
-    }
-
-    private var hoverFill: Color {
-        if isDestructive {
-            return colorScheme == .dark ? Color(red: 1.0, green: 0.3, blue: 0.28).opacity(0.15) : Color(red: 0.9, green: 0.2, blue: 0.15).opacity(0.10)
-        }
-        return colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04)
-    }
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 10.5, weight: .semibold))
-                }
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-            }
-            .foregroundColor(foreground)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(isHovered ? hoverFill : Color.clear)
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-    }
-}
 
 // MARK: - Add Bookmark Sheet
 
@@ -661,17 +630,14 @@ private struct AddBookmarkSheet: View {
                     .textFieldStyle(.roundedBorder)
             }
 
-            HStack {
+            HStack(spacing: 10) {
                 Spacer()
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
+                LotusDialogCancelButton { dismiss() }
 
-                Button("Save") {
+                LotusDialogActionButton(title: "Add", isDestructive: false, showsReturnKeycap: true) {
                     save()
                     dismiss()
                 }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
                 .disabled(title.isEmpty || URL(string: urlString) == nil)
             }
             .padding(.top, 8)
@@ -717,17 +683,14 @@ private struct EditBookmarkSheet: View {
                     .textFieldStyle(.roundedBorder)
             }
 
-            HStack {
+            HStack(spacing: 10) {
                 Spacer()
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
+                LotusDialogCancelButton { dismiss() }
 
-                Button("Save Changes") {
+                LotusDialogActionButton(title: "Save Changes", isDestructive: false, showsReturnKeycap: true) {
                     save()
                     dismiss()
                 }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
                 .disabled(title.isEmpty || URL(string: urlString) == nil)
             }
             .padding(.top, 8)
@@ -746,7 +709,8 @@ private struct EditBookmarkSheet: View {
         browserState.addOrUpdateBookmark(
             title: title,
             url: url,
-            faviconURL: bookmark.faviconURL
+            faviconURL: bookmark.faviconURL,
+            profileId: bookmark.profileId
         )
     }
 }

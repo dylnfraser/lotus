@@ -90,7 +90,7 @@ struct FolderRow: View {
             // Cross close button (visible on hover, matching TabButton alignment)
             Button(action: onClose) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 8.5, weight: .bold))
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundColor(folder.color.color.opacity(0.75))
                     .frame(width: 14, height: 14)
             }

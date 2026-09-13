@@ -25,9 +25,7 @@ struct PrivacySettingsSection: View {
                     subtitle: historyCount == 0 ? "No visited pages recorded" : "\(historyCount) visited page\(historyCount == 1 ? "" : "s")",
                     buttonTitle: "Open History"
                 ) {
-                    if let url = URL(string: "lotus://history") {
-                        browserState.loadURL(url, in: tabId)
-                    }
+                    browserState.loadURL(.lotusHistory, in: tabId)
                 }
                 SettingsDivider()
                 SettingsButtonRow(
@@ -36,9 +34,7 @@ struct PrivacySettingsSection: View {
                     subtitle: "Inspect and delete cookies, caches, and local storage per site",
                     buttonTitle: "Open Website Data"
                 ) {
-                    if let url = URL(string: "lotus://data") {
-                        browserState.loadURL(url, in: tabId)
-                    }
+                    browserState.loadURL(.lotusWebsiteData, in: tabId)
                 }
             }
 

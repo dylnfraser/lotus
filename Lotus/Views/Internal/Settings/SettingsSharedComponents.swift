@@ -139,23 +139,7 @@ enum LotusAccentColor: String, CaseIterable, Identifiable {
     }
 
     static var systemAccentColor: Color {
-        guard let accentPref = UserDefaults.standard.object(forKey: "AppleAccentColor") as? Int else {
-            // "Multicolor" is selected in macOS System Settings -> Apple Blue
-            return Color(nsColor: .systemBlue)
-        }
-
-        switch accentPref {
-        case 0: return Color(nsColor: .systemRed)
-        case 1: return Color(nsColor: .systemOrange)
-        case 2: return Color(nsColor: .systemYellow)
-        case 3: return Color(nsColor: .systemGreen)
-        case 4: return Color(nsColor: .systemBlue)
-        case 5: return Color(nsColor: .systemPurple)
-        case 6: return Color(nsColor: .systemPink)
-        case -1: return Color(nsColor: .systemGray)
-        default:
-            return Color(nsColor: .systemBlue)
-        }
+        Color(nsColor: .controlAccentColor)
     }
 
     var color: Color {
@@ -204,18 +188,8 @@ enum LotusAccentColor: String, CaseIterable, Identifiable {
     var hexString: String {
         switch self {
         case .white:
-            if let accentPref = UserDefaults.standard.object(forKey: "AppleAccentColor") as? Int {
-                switch accentPref {
-                case 0: return "#FF3B30" // Red
-                case 1: return "#FF9500" // Orange
-                case 2: return "#FFCC00" // Yellow
-                case 3: return "#34C759" // Green
-                case 4: return "#007AFF" // Blue
-                case 5: return "#AF52DE" // Purple
-                case 6: return "#FF2D55" // Pink
-                case -1: return "#8E8E93" // Graphite
-                default: return "#007AFF"
-                }
+            if let rgbColor = NSColor.controlAccentColor.usingColorSpace(.sRGB) {
+                return String(format: "#%02X%02X%02X", Int(rgbColor.redComponent * 255), Int(rgbColor.greenComponent * 255), Int(rgbColor.blueComponent * 255))
             }
             return "#007AFF"
         case .blue: return "#007AFF"
@@ -235,6 +209,10 @@ enum LotusAccentColor: String, CaseIterable, Identifiable {
 
     static var currentAccentHex: String {
         current.hexString
+    }
+
+    static var paletteOrder: [LotusAccentColor] {
+        [.white, .green, .blue, .purple, .yellow, .pink, .red, .orange]
     }
 }
 
@@ -284,7 +262,7 @@ struct SettingsSidebarItem: View {
                         .frame(width: 20, height: 20)
 
                     Image(systemName: category.systemImage)
-                        .font(.system(size: 10.5, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.white)
                 }
 
@@ -308,12 +286,10 @@ struct SettingsSidebarItem: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .focusable(false)
-        .focusEffectDisabled()
     }
 }
 
-// MARK: - Settings Section Card (macOS Inset Grouped Card with Zero Outlines)
+// MARK: - Settings Section Card (Dia/Arc Sleek Card with 14pt Radius & Hairline Border)
 
 struct SettingsSectionCard<Content: View>: View {
     let title: String?
@@ -332,32 +308,41 @@ struct SettingsSectionCard<Content: View>: View {
 
     private var cardFill: Color {
         colorScheme == .dark
-            ? Color.white.opacity(0.08)
-            : Color.white
+            ? Color.white.opacity(0.05)
+            : Color(nsColor: .controlBackgroundColor)
+    }
+
+    private var cardStroke: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     var body: some View {
-        Spacer()
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 7) {
             if let title = title, !title.isEmpty {
                 Text(title)
-                    .font(.system(size: 13.5, weight: .bold))
-                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.92) : Color(nsColor: .labelColor))
-                    .padding(.leading, 4)
-                    .padding(.bottom, 1)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(colorScheme == .dark ? .white : Color(nsColor: .labelColor))
+                    .padding(.leading, 2)
+                    .padding(.top, 14)
+                    .padding(.bottom, 2)
             }
 
             VStack(spacing: 0, content: content)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .fill(cardFill)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .focusEffectDisabled()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(cardStroke, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             if let footer = footer, !footer.isEmpty {
                 Text(footer)
-                    .font(.system(size: 11.5, weight: .regular))
+                    .font(.system(size: 12, weight: .regular))
                     .foregroundColor(colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor))
                     .lineSpacing(2.5)
                     .fixedSize(horizontal: false, vertical: true)
@@ -369,17 +354,268 @@ struct SettingsSectionCard<Content: View>: View {
     }
 }
 
-// MARK: - Settings Divider (Inset Separator)
+// MARK: - Settings Divider (Subtle Inset Separator)
 
 struct SettingsDivider: View {
     @Environment(\.colorScheme) private var colorScheme
-    var leadingInset: CGFloat = 14
+    var leadingInset: CGFloat = 16
 
     var body: some View {
         Rectangle()
-            .fill(colorScheme == .dark ? Color.white.opacity(0.07) : Color.black.opacity(0.06))
+            .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.05))
             .frame(height: 0.5)
             .padding(.leading, leadingInset)
+    }
+}
+
+// MARK: - Card Action Row (Dia-Style Prominent Button Card Row)
+
+struct SettingsCardActionRow: View {
+    var systemImage: String? = nil
+    let title: String
+    let subtitle: String
+    var linkTitle: String? = nil
+    var linkURL: URL? = nil
+    let buttonTitle: String
+    var buttonAction: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            if let systemImage = systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.6) : .secondary)
+                    .frame(width: 22)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(colorScheme == .dark ? .white : Color(nsColor: .labelColor))
+
+                HStack(spacing: 4) {
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.55) : Color(nsColor: .secondaryLabelColor))
+                        .lineSpacing(2)
+
+                    if let link = linkTitle, let url = linkURL {
+                        Link(link, destination: url)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(Color.accentColor)
+                            .underline()
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 16)
+
+            Button(action: buttonAction) {
+                Text(buttonTitle)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .fill(Color.accentColor)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+}
+
+// MARK: - Settings Prompt Box (Dia-Style Dark Text Area / Input)
+
+struct SettingsPromptBox: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+    var isMultiLine: Bool = true
+    var minHeight: CGFloat = 38
+
+    @Environment(\.colorScheme) private var colorScheme
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(colorScheme == .dark ? .white.opacity(0.92) : Color(nsColor: .labelColor))
+
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .stroke(
+                                isFocused
+                                    ? (colorScheme == .dark ? Color.white.opacity(0.24) : Color.black.opacity(0.20))
+                                    : (colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.06)),
+                                lineWidth: 1
+                            )
+                    )
+
+                if isMultiLine {
+                    ZStack(alignment: .topLeading) {
+                        if text.isEmpty {
+                            Text(placeholder)
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.32) : Color.black.opacity(0.35))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .allowsHitTesting(false)
+                        }
+
+                        TextEditor(text: $text)
+                            .font(.system(size: 12, weight: .regular))
+                            .scrollContentBackground(.hidden)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 6)
+                            .frame(minHeight: minHeight)
+                            .focused($isFocused)
+                    }
+                } else {
+                    TextField(placeholder, text: $text)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12, weight: .regular))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .frame(height: minHeight)
+                        .focused($isFocused)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Settings Input Field (Matches LotusSettingsButton styling)
+
+struct SettingsInputField: View {
+    let placeholder: String
+    @Binding var text: String
+    var systemImage: String? = nil
+    var width: CGFloat? = nil
+    var height: CGFloat = 30
+    var onCommit: (() -> Void)? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+    @FocusState private var isFocused: Bool
+    @State private var isHovered: Bool = false
+
+    private var backgroundFill: Color {
+        if isFocused {
+            return colorScheme == .dark ? Color.white.opacity(0.10) : Color.black.opacity(0.06)
+        }
+        return colorScheme == .dark
+            ? Color.white.opacity(isHovered ? 0.09 : 0.06)
+            : Color.black.opacity(isHovered ? 0.06 : 0.04)
+    }
+
+    private var strokeColor: Color {
+        if isFocused {
+            return colorScheme == .dark ? Color.white.opacity(0.24) : Color.black.opacity(0.20)
+        }
+        return colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.06)
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor))
+            }
+
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, weight: .regular))
+                .foregroundColor(colorScheme == .dark ? .white.opacity(0.9) : Color(nsColor: .labelColor))
+                .focused($isFocused)
+                .onSubmit {
+                    onCommit?()
+                }
+
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.4) : .secondary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(height: height)
+        .frame(width: width)
+        .background(
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(backgroundFill)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .stroke(strokeColor, lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .animation(.easeInOut(duration: 0.14), value: isFocused)
+        .animation(.easeInOut(duration: 0.12), value: isHovered)
+    }
+}
+
+// MARK: - Settings Color Swatches Row (Centered Dia-Style Hero Swatches)
+
+struct SettingsColorSwatchesRow: View {
+    @Binding var selectedAccent: String
+    var browserState: BrowserState? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(LotusAccentColor.paletteOrder) { accent in
+                let isSelected = selectedAccent == accent.rawValue
+                Button {
+                    withAnimation(.spring(response: 0.22, dampingFraction: 0.8)) {
+                        selectedAccent = accent.rawValue
+                        if let bs = browserState, !bs.isPrivate {
+                            var updated = bs.currentProfile
+                            updated.color = accent.folderColorEquivalent
+                            bs.updateProfile(updated)
+                        }
+                    }
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(accent.swatchColor)
+                            .frame(width: 32, height: 32)
+
+                        if isSelected {
+                            Circle()
+                                .strokeBorder(colorScheme == .dark ? Color.white.opacity(0.95) : Color.black.opacity(0.85), lineWidth: 2)
+                                .frame(width: 42, height: 42)
+                        }
+                    }
+                    .frame(width: 42, height: 42)
+                    .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .help(accent.displayName)
+            }
+        }
+        .padding(.vertical, 8)
     }
 }
 
@@ -414,10 +650,10 @@ struct SettingsRow: View {
             Spacer()
 
             Text(detail)
-                .font(.system(size: 12.5, weight: .regular))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor))
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .frame(height: 46)
     }
 }
@@ -431,8 +667,6 @@ extension View {
             .tint(Color(nsColor: .controlTextColor))
             .accentColor(Color(nsColor: .controlTextColor))
             .foregroundColor(Color(nsColor: .controlTextColor))
-            .focusable(false)
-            .focusEffectDisabled()
     }
 }
 
@@ -464,7 +698,7 @@ struct SettingsToggleRow: View {
 
                 if let subtitle = subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.system(size: 11.5, weight: .regular))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : .secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -484,7 +718,7 @@ struct SettingsToggleRow: View {
             .disabled(isDisabled)
             .opacity(isDisabled ? 0.45 : 1.0)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .frame(minHeight: subtitle != nil ? 50 : 46)
     }
 }
@@ -495,7 +729,114 @@ struct SettingsPickerRow<T: Hashable>: View {
     var subtitle: String? = nil
     @Binding var selection: T
     let options: [(tag: T, label: String)]
-    var pickerWidth: CGFloat = 160
+    var pickerWidth: CGFloat? = 160
+    var isDisabled: Bool = false
+    var onChange: ((T) -> Void)? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var isHovered: Bool = false
+
+    private var selectedLabel: String {
+        options.first(where: { $0.tag == selection })?.label ?? ""
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if let systemImage = systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.6) : .secondary)
+                    .frame(width: 22)
+            }
+
+            VStack(alignment: .leading, spacing: subtitle != nil ? 1 : 0) {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.92) : .primary)
+
+                if let subtitle = subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : .secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Spacer()
+
+            Menu {
+                ForEach(options, id: \.tag) { opt in
+                    Button {
+                        selection = opt.tag
+                        onChange?(opt.tag)
+                    } label: {
+                        HStack {
+                            Text(opt.label)
+                            if opt.tag == selection {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text(selectedLabel)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.88) : Color(nsColor: .labelColor))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+
+                    if pickerWidth != nil {
+                        Spacer(minLength: 4)
+                    }
+
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 8.5, weight: .semibold))
+                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.5) : Color(nsColor: .secondaryLabelColor))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .frame(width: pickerWidth)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(
+                            colorScheme == .dark
+                                ? Color.white.opacity(isHovered ? 0.12 : 0.06)
+                                : Color.black.opacity(isHovered ? 0.08 : 0.04)
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .stroke(
+                            colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.06),
+                            lineWidth: 1
+                        )
+                )
+                .contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .disabled(isDisabled)
+            .opacity(isDisabled ? 0.45 : 1.0)
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.12)) {
+                    isHovered = hovering
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: subtitle != nil ? 50 : 46)
+    }
+}
+
+struct SettingsSegmentedRow<T: Hashable>: View {
+    var systemImage: String? = nil
+    let title: String
+    var subtitle: String? = nil
+    @Binding var selection: T
+    let options: [(tag: T, label: String)]
+    var pickerWidth: CGFloat = 210
     var isDisabled: Bool = false
     var onChange: ((T) -> Void)? = nil
 
@@ -517,80 +858,55 @@ struct SettingsPickerRow<T: Hashable>: View {
 
                 if let subtitle = subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.system(size: 11.5, weight: .regular))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : .secondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
             Spacer()
 
-            Picker(title, selection: $selection) {
+            HStack(spacing: 2) {
                 ForEach(options, id: \.tag) { opt in
-                    Text(opt.label).tag(opt.tag)
+                    let isSelected = selection == opt.tag
+                    Button {
+                        withAnimation(.spring(response: 0.22, dampingFraction: 0.82)) {
+                            selection = opt.tag
+                            onChange?(opt.tag)
+                        }
+                    } label: {
+                        Text(opt.label)
+                            .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                            .foregroundColor(
+                                isSelected
+                                    ? (colorScheme == .dark ? .white : Color(nsColor: .labelColor))
+                                    : (colorScheme == .dark ? .white.opacity(0.55) : Color(nsColor: .secondaryLabelColor))
+                            )
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4.5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                    .fill(isSelected ? (colorScheme == .dark ? Color.white.opacity(0.14) : Color.white) : Color.clear)
+                                    .shadow(color: isSelected && colorScheme == .light ? Color.black.opacity(0.08) : Color.clear, radius: 1.5, y: 0.5)
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .labelsHidden()
-            .untintedDropdown()
-            .frame(width: pickerWidth, alignment: .trailing)
+            .padding(2.5)
+            .frame(width: pickerWidth)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .stroke(colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.06), lineWidth: 1)
+            )
             .disabled(isDisabled)
             .opacity(isDisabled ? 0.45 : 1.0)
-            .onChange(of: selection) { _, newValue in
-                onChange?(newValue)
-            }
         }
-        .padding(.horizontal, 14)
-        .frame(minHeight: subtitle != nil ? 50 : 46)
-    }
-}
-
-struct SettingsSegmentedRow<T: Hashable>: View {
-    var systemImage: String? = nil
-    let title: String
-    var subtitle: String? = nil
-    @Binding var selection: T
-    let options: [(tag: T, label: String)]
-    var pickerWidth: CGFloat = 210
-    var isDisabled: Bool = false
-
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        HStack(spacing: 12) {
-            if let systemImage = systemImage {
-                Image(systemName: systemImage)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.6) : .secondary)
-                    .frame(width: 22)
-            }
-
-            VStack(alignment: .leading, spacing: subtitle != nil ? 1 : 0) {
-                Text(title)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.92) : .primary)
-
-                if let subtitle = subtitle, !subtitle.isEmpty {
-                    Text(subtitle)
-                        .font(.system(size: 11.5, weight: .regular))
-                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : .secondary)
-                }
-            }
-
-            Spacer()
-
-            Picker(title, selection: $selection) {
-                ForEach(options, id: \.tag) { opt in
-                    Text(opt.label).tag(opt.tag)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.segmented)
-            .frame(width: pickerWidth)
-            .focusable(false)
-            .focusEffectDisabled()
-            .disabled(isDisabled)
-        }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .frame(minHeight: subtitle != nil ? 50 : 48)
     }
 }
@@ -622,21 +938,116 @@ struct SettingsButtonRow: View {
 
                 if let subtitle = subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.system(size: 11, weight: .regular))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : .secondary)
                 }
             }
 
             Spacer()
 
-            Button(buttonTitle, role: isDestructive ? .destructive : nil, action: action)
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-                .frame(width: buttonWidth, height: 28, alignment: .trailing)
-                .focusable(false)
-                .focusEffectDisabled()
+            LotusSettingsButton(
+                title: buttonTitle,
+                isDestructive: isDestructive,
+                action: action
+            )
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .frame(minHeight: subtitle != nil ? 50 : 48)
+    }
+}
+
+// MARK: - Lotus Settings Button & Style (Unified Size & Padding matching Bookmarks Header)
+
+struct LotusSettingsButtonStyle: ButtonStyle {
+    var isDestructive: Bool = false
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        LotusSettingsButtonBody(configuration: configuration, isDestructive: isDestructive, isEnabled: isEnabled)
+    }
+}
+
+extension ButtonStyle where Self == LotusSettingsButtonStyle {
+    static var lotusSettings: LotusSettingsButtonStyle { LotusSettingsButtonStyle() }
+    static func lotusSettings(destructive: Bool) -> LotusSettingsButtonStyle {
+        LotusSettingsButtonStyle(isDestructive: destructive)
+    }
+}
+
+private struct LotusSettingsButtonBody: View {
+    let configuration: ButtonStyle.Configuration
+    let isDestructive: Bool
+    let isEnabled: Bool
+
+    @State private var isHovered: Bool = false
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var foreground: Color {
+        if isDestructive {
+            return Color(nsColor: .systemRed)
+        }
+        if isHovered {
+            return colorScheme == .dark ? .white : Color(nsColor: .labelColor)
+        }
+        return colorScheme == .dark ? .white.opacity(0.88) : Color(nsColor: .labelColor)
+    }
+
+    private var backgroundFill: Color {
+        if isDestructive {
+            return Color(nsColor: .systemRed).opacity(colorScheme == .dark ? (isHovered ? 0.20 : 0.12) : (isHovered ? 0.15 : 0.08))
+        }
+        return colorScheme == .dark
+            ? Color.white.opacity(configuration.isPressed ? 0.16 : (isHovered ? 0.12 : 0.06))
+            : Color.black.opacity(configuration.isPressed ? 0.12 : (isHovered ? 0.08 : 0.04))
+    }
+
+    private var strokeColor: Color {
+        if isDestructive {
+            return Color(nsColor: .systemRed).opacity(0.20)
+        }
+        return colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.06)
+    }
+
+    var body: some View {
+        configuration.label
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(foreground)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(backgroundFill)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .stroke(strokeColor, lineWidth: 1)
+            )
+            .contentShape(Rectangle())
+            .opacity(isEnabled ? 1.0 : 0.40)
+            .onHover { hovering in
+                isHovered = hovering
+            }
+    }
+}
+
+struct LotusSettingsButton: View {
+    let title: String
+    var systemImage: String? = nil
+    var isDestructive: Bool = false
+    var isDisabled: Bool = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                Text(title)
+            }
+        }
+        .buttonStyle(LotusSettingsButtonStyle(isDestructive: isDestructive))
+        .disabled(isDisabled)
     }
 }

@@ -11,7 +11,6 @@ import UniformTypeIdentifiers
 struct AppearanceSettingsSection: View {
     var browserState: BrowserState? = nil
 
-    @AppStorage("lotus.browser.accentColor") private var accentColor: String = "white"
     @AppStorage("lotus.browser.appearance") private var appearanceMode: String = "system"
     @AppStorage("lotus.browser.titlebarChromeTintingMode") private var titlebarChromeTintingMode: String = "adaptive"
     @AppStorage("lotus.browser.sidebarTabTintingMode") private var sidebarTabTintingMode: String = "adaptive"
@@ -26,9 +25,7 @@ struct AppearanceSettingsSection: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            SettingsSectionCard(title: "Theme & Accent") {
-                AccentColorPickerRow(selectedAccent: $accentColor, browserState: browserState)
-                SettingsDivider()
+            SettingsSectionCard(title: "Theme & Tinting") {
                 SettingsSegmentedRow(
                     systemImage: "circle.lefthalf.filled",
                     title: "Theme",
@@ -36,11 +33,7 @@ struct AppearanceSettingsSection: View {
                     options: [("system", "System"), ("light", "Light"), ("dark", "Dark")],
                     pickerWidth: 210
                 )
-            }
-
-            SettingsSectionCard(
-                title: "Chrome Tinting"
-            ) {
+                SettingsDivider()
                 SettingsPickerRow(
                     systemImage: "menubar.rectangle",
                     title: "Toolbar chrome tinting",
@@ -114,87 +107,6 @@ struct AppearanceSettingsSection: View {
 
             ToolbarArrangementSettingsCard(toolbarLayoutRaw: $toolbarLayoutRaw)
         }
-    }
-}
-
-// MARK: - Rows
-
-private struct AccentColorPickerRow: View {
-    @Binding var selectedAccent: String
-    var browserState: BrowserState? = nil
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var currentAccentKey: String {
-        if let bs = browserState, !bs.isPrivate {
-            return bs.currentProfile.color.accentColorEquivalent.rawValue
-        }
-        return selectedAccent
-    }
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "paintpalette.fill")
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(colorScheme == .dark ? .white.opacity(0.6) : .secondary)
-                .frame(width: 22)
-
-            Text("Accent color")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(colorScheme == .dark ? .white.opacity(0.92) : .primary)
-
-            Spacer()
-
-            HStack(spacing: 10) {
-                ForEach(LotusAccentColor.allCases) { accent in
-                    AccentColorDot(
-                        accent: accent,
-                        isSelected: currentAccentKey == accent.rawValue,
-                        action: {
-                            withAnimation(.spring(response: 0.22, dampingFraction: 0.8)) {
-                                selectedAccent = accent.rawValue
-                                if let bs = browserState, !bs.isPrivate {
-                                    var updated = bs.currentProfile
-                                    updated.color = accent.folderColorEquivalent
-                                    bs.updateProfile(updated)
-                                }
-                            }
-                        }
-                    )
-                }
-            }
-        }
-        .padding(.horizontal, 14)
-        .frame(height: 52)
-    }
-}
-
-private struct AccentColorDot: View {
-    let accent: LotusAccentColor
-    let isSelected: Bool
-    let action: () -> Void
-
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                Circle()
-                    .fill(accent.swatchColor)
-                    .frame(width: 20, height: 20)
-
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 9.5, weight: .bold))
-                        .foregroundColor(accent == .white ? (colorScheme == .dark ? .black : .white) : .white)
-                }
-            }
-            .frame(width: 24, height: 24)
-            .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .focusable(false)
-        .focusEffectDisabled()
-        .help(accent.displayName)
     }
 }
 
@@ -284,25 +196,13 @@ private struct ToolbarArrangementSettingsCard: View {
 
                 Spacer()
 
-                Button(action: resetToDefault) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .font(.system(size: 10, weight: .semibold))
-                        Text("Reset Default")
-                            .font(.system(size: 11.5, weight: .medium))
-                    }
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 4.5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
-                    )
+                LotusSettingsButton(
+                    title: "Reset Default",
+                    systemImage: "arrow.counterclockwise",
+                    isDisabled: isDefaultOrder
+                ) {
+                    resetToDefault()
                 }
-                .buttonStyle(.plain)
-                .focusable(false)
-                .focusEffectDisabled()
-                .disabled(isDefaultOrder)
-                .opacity(isDefaultOrder ? 0.45 : 1.0)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
@@ -377,6 +277,46 @@ private struct AvailableItemsSectionView: View {
     @State private var isTargeted: Bool = false
     @Environment(\.colorScheme) private var colorScheme
 
+    private var availableItemsFill: Color {
+        if isTargeted {
+            return colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)
+        }
+        return colorScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.03)
+    }
+
+    private var availableItemsStroke: Color {
+        colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.05)
+    }
+
+    private var emptyStateIconColor: Color {
+        if isTargeted {
+            return colorScheme == .dark ? .white : .primary
+        }
+        return colorScheme == .dark ? .white.opacity(0.4) : .secondary
+    }
+
+    @ViewBuilder
+    private var emptyStateView: some View {
+        HStack {
+            Spacer()
+            VStack(spacing: 5) {
+                Image(systemName: "tray.and.arrow.down")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(emptyStateIconColor)
+
+                Text("All items are in your toolbar")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.75) : .primary)
+
+                Text("Drag items here from above to remove them")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.35) : .secondary)
+            }
+            .padding(.vertical, 16)
+            Spacer()
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -395,54 +335,38 @@ private struct AvailableItemsSectionView: View {
             .padding(.top, 8)
             .padding(.bottom, 2)
 
-            if availableItems.isEmpty {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 5) {
-                        Image(systemName: "tray.and.arrow.down")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(isTargeted ? (colorScheme == .dark ? .white : .primary) : (colorScheme == .dark ? .white.opacity(0.4) : .secondary))
+            Group {
+                if availableItems.isEmpty {
+                    emptyStateView
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(availableItems.enumerated()), id: \.element.id) { index, item in
+                            ToolbarAvailableItemRow(
+                                item: item,
+                                draggedItem: $draggedItem,
+                                onAdd: {
+                                    onAdd(item)
+                                }
+                            )
 
-                        Text("All items are in your toolbar")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(colorScheme == .dark ? .white.opacity(0.75) : .primary)
-
-                        Text("Drag items here from above to remove them")
-                            .font(.system(size: 11, weight: .regular))
-                            .foregroundColor(colorScheme == .dark ? .white.opacity(0.35) : .secondary)
-                    }
-                    .padding(.vertical, 16)
-                    Spacer()
-                }
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(isTargeted ? (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)) : (colorScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.03)))
-                )
-                .padding(.horizontal, 14)
-                .padding(.bottom, 8)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(availableItems.enumerated()), id: \.element.id) { index, item in
-                        ToolbarAvailableItemRow(
-                            item: item,
-                            draggedItem: $draggedItem,
-                            onAdd: {
-                                onAdd(item)
+                            if index < availableItems.count - 1 {
+                                SettingsDivider(leadingInset: 10)
                             }
-                        )
-
-                        if index < availableItems.count - 1 {
-                            SettingsDivider()
                         }
                     }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(isTargeted ? (colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)) : Color.clear)
-                )
-                .padding(.horizontal, 14)
-                .padding(.bottom, 6)
             }
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(availableItemsFill)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(availableItemsStroke, lineWidth: 1)
+                    )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .padding(.horizontal, 8)
+            .padding(.bottom, 8)
         }
         .contentShape(Rectangle())
         .animation(.spring(response: 0.22, dampingFraction: 0.82), value: isTargeted)
@@ -528,8 +452,6 @@ private struct ToolbarItemReorderRow: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
-                .focusEffectDisabled()
                 .disabled(index == 0)
                 .opacity(index == 0 ? 0.25 : 0.75)
                 .help("Move Up")
@@ -541,8 +463,6 @@ private struct ToolbarItemReorderRow: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
-                .focusEffectDisabled()
                 .disabled(index == totalCount - 1)
                 .opacity(index == totalCount - 1 ? 0.25 : 0.75)
                 .help("Move Down")
@@ -562,8 +482,6 @@ private struct ToolbarItemReorderRow: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .focusable(false)
-            .focusEffectDisabled()
             .help("Remove from Toolbar")
         }
         .padding(.horizontal, 14)
@@ -657,26 +575,15 @@ private struct ToolbarAvailableItemRow: View {
             .contentShape(Rectangle())
 
             // Add Button
-            Button(action: onAdd) {
-                HStack(spacing: 4) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 10, weight: .bold))
-                    Text("Add")
-                        .font(.system(size: 11.5, weight: .medium))
-                }
-                .padding(.horizontal, 9)
-                .padding(.vertical, 4.5)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
-                )
+            LotusSettingsButton(
+                title: "Add",
+                systemImage: "plus"
+            ) {
+                onAdd()
             }
-            .buttonStyle(.plain)
-            .focusable(false)
-            .focusEffectDisabled()
             .help("Add \(item.displayName) to Toolbar")
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 10)
         .frame(maxWidth: .infinity)
         .frame(height: 46)
         .background(Color.white.opacity(0.0001))

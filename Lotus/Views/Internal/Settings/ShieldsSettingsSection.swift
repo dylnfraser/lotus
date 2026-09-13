@@ -118,8 +118,6 @@ private struct ShieldsStrictPopupBlockedSettingsRow: View {
                         .padding(6)
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
-                .focusEffectDisabled()
             }
             .padding(.horizontal, 14)
             .frame(height: 46)
@@ -130,20 +128,23 @@ private struct ShieldsStrictPopupBlockedSettingsRow: View {
 
                     // Add new domain input
                     HStack(spacing: 8) {
-                        TextField("Add website domain (e.g. example.com)", text: $newDomainInput)
-                            .textFieldStyle(.roundedBorder)
-                            .onSubmit {
-                                addDomain()
+                        SettingsInputField(
+                            placeholder: "Add website domain (e.g. example.com)",
+                            text: $newDomainInput,
+                            onCommit: {
+                                if !newDomainInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    addDomain()
+                                }
                             }
+                        )
 
-                        Button("Add") {
+                        LotusSettingsButton(
+                            title: "Add",
+                            systemImage: "plus",
+                            isDisabled: newDomainInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ) {
                             addDomain()
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .focusable(false)
-                        .focusEffectDisabled()
-                        .disabled(newDomainInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     .padding(.horizontal, 14)
                     .padding(.top, 4)
@@ -171,11 +172,9 @@ private struct ShieldsStrictPopupBlockedSettingsRow: View {
                                     } label: {
                                         Image(systemName: "trash")
                                             .font(.system(size: 11, weight: .regular))
-                                            .foregroundColor(Color.red.opacity(0.8))
+                                            .foregroundColor(Color(nsColor: .systemRed).opacity(0.8))
                                     }
                                     .buttonStyle(.plain)
-                                    .focusable(false)
-                                    .focusEffectDisabled()
                                     .help("Remove strict popup block")
                                 }
                                 .padding(.horizontal, 14)
@@ -238,8 +237,6 @@ private struct ShieldsAllowlistSettingsRow: View {
                         .padding(6)
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
-                .focusEffectDisabled()
             }
             .padding(.horizontal, 14)
             .frame(height: 46)
@@ -250,20 +247,23 @@ private struct ShieldsAllowlistSettingsRow: View {
 
                     // Add new domain input
                     HStack(spacing: 8) {
-                        TextField("Add website domain (e.g. example.com)", text: $newDomainInput)
-                            .textFieldStyle(.roundedBorder)
-                            .onSubmit {
-                                addDomain()
+                        SettingsInputField(
+                            placeholder: "Add website domain (e.g. example.com)",
+                            text: $newDomainInput,
+                            onCommit: {
+                                if !newDomainInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    addDomain()
+                                }
                             }
+                        )
 
-                        Button("Add") {
+                        LotusSettingsButton(
+                            title: "Add",
+                            systemImage: "plus",
+                            isDisabled: newDomainInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ) {
                             addDomain()
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .focusable(false)
-                        .focusEffectDisabled()
-                        .disabled(newDomainInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     .padding(.horizontal, 14)
                     .padding(.top, 4)
@@ -291,11 +291,9 @@ private struct ShieldsAllowlistSettingsRow: View {
                                     } label: {
                                         Image(systemName: "trash")
                                             .font(.system(size: 11, weight: .regular))
-                                            .foregroundColor(Color.red.opacity(0.8))
+                                            .foregroundColor(Color(nsColor: .systemRed).opacity(0.8))
                                     }
                                     .buttonStyle(.plain)
-                                    .focusable(false)
-                                    .focusEffectDisabled()
                                     .help("Remove from whitelist")
                                 }
                                 .padding(.horizontal, 14)
@@ -350,10 +348,8 @@ private struct ShieldsZappedElementsSettingsCard: View {
                             zapStore.clearAll()
                         }
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(Color.red.opacity(0.85))
+                        .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
                         .buttonStyle(.plain)
-                        .focusable(false)
-                        .focusEffectDisabled()
                     }
                 }
                 .padding(.horizontal, 14)
@@ -375,7 +371,7 @@ private struct ShieldsZappedElementsSettingsCard: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
                                     Text(domain)
-                                        .font(.system(size: 12.5, weight: .semibold))
+                                        .font(.system(size: 12, weight: .semibold))
                                         .foregroundColor(colorScheme == .dark ? .white.opacity(0.92) : Color(nsColor: .labelColor))
 
                                     Text("(\(elements.count))")
@@ -389,11 +385,9 @@ private struct ShieldsZappedElementsSettingsCard: View {
                                     } label: {
                                         Text("Clear Site")
                                             .font(.system(size: 11, weight: .regular))
-                                            .foregroundColor(Color.red.opacity(0.8))
+                                            .foregroundColor(Color(nsColor: .systemRed).opacity(0.8))
                                     }
                                     .buttonStyle(.plain)
-                                    .focusable(false)
-                                    .focusEffectDisabled()
                                 }
 
                                 VStack(spacing: 4) {
@@ -406,7 +400,7 @@ private struct ShieldsZappedElementsSettingsCard: View {
                                                     .lineLimit(1)
 
                                                 Text(zap.selector)
-                                                    .font(.system(size: 9.5, design: .monospaced))
+                                                    .font(.system(size: 10, design: .monospaced))
                                                     .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : .secondary)
                                                     .lineLimit(1)
                                             }
@@ -417,13 +411,11 @@ private struct ShieldsZappedElementsSettingsCard: View {
                                                 zapStore.removeZap(zap)
                                             } label: {
                                                 Image(systemName: "trash")
-                                                    .font(.system(size: 10.5))
-                                                    .foregroundColor(Color.red.opacity(0.75))
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(Color(nsColor: .systemRed).opacity(0.75))
                                                     .padding(3)
                                             }
                                             .buttonStyle(.plain)
-                                            .focusable(false)
-                                            .focusEffectDisabled()
                                             .help("Restore element")
                                         }
                                         .padding(6)

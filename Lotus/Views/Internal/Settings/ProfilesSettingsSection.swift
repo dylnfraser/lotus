@@ -11,8 +11,6 @@ struct ProfilesSettingsSection: View {
     @ObservedObject var browserState: BrowserState
     var tabId: UUID? = nil
 
-    @State private var editingProfile: Profile? = nil
-    @State private var isCreatingProfile: Bool = false
     @Environment(\.colorScheme) private var colorScheme
 
     private var foregroundPrimary: Color {
@@ -48,58 +46,19 @@ struct ProfilesSettingsSection: View {
                             .foregroundColor(foregroundPrimary)
 
                         Text("Separate workspace for work, personal, or client projects")
-                            .font(.system(size: 11.5, weight: .regular))
+                            .font(.system(size: 11, weight: .regular))
                             .foregroundColor(foregroundSecondary)
                     }
 
                     Spacer()
 
-                    Button {
-                        isCreatingProfile = true
-                    } label: {
-                        Text("New Profile…")
+                    LotusSettingsButton(title: "New Profile…", systemImage: "plus") {
+                        browserState.openCreateProfile()
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .focusable(false)
-                    .focusEffectDisabled()
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 50)
             }
-        }
-        .sheet(isPresented: $isCreatingProfile) {
-            CreateProfileModalView(
-                onSave: { newName, newIcon, newColor in
-                    let created = browserState.createProfile(
-                        name: newName,
-                        icon: newIcon,
-                        color: newColor
-                    )
-                    browserState.switchProfile(to: created.id)
-                    isCreatingProfile = false
-                },
-                onCancel: {
-                    isCreatingProfile = false
-                }
-            )
-        }
-        .sheet(item: $editingProfile) { profile in
-            EditProfileModalView(
-                profile: profile,
-                canDelete: browserState.canDeleteProfile(profile),
-                onSave: { updated in
-                    browserState.updateProfile(updated)
-                    editingProfile = nil
-                },
-                onDelete: { toDelete in
-                    editingProfile = nil
-                    browserState.requestDeleteProfile(toDelete)
-                },
-                onCancel: {
-                    editingProfile = nil
-                }
-            )
         }
     }
 
@@ -140,7 +99,7 @@ struct ProfilesSettingsSection: View {
                 }
 
                 Text("\(tabCount) \(tabCount == 1 ? "tab" : "tabs")")
-                    .font(.system(size: 11.5, weight: .regular))
+                    .font(.system(size: 11, weight: .regular))
                     .foregroundColor(foregroundSecondary)
             }
 
@@ -149,28 +108,22 @@ struct ProfilesSettingsSection: View {
             HStack(spacing: 8) {
                 if isActive {
                     Text("Active Window")
-                        .font(.system(size: 11.5, weight: .regular))
+                        .font(.system(size: 11, weight: .regular))
                         .foregroundColor(foregroundSecondary)
                 } else {
-                    Button("Switch") {
+                    LotusSettingsButton(title: "Switch") {
                         browserState.switchProfile(to: profile.id)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .focusable(false)
-                    .focusEffectDisabled()
                 }
 
                 Button {
-                    editingProfile = profile
+                    browserState.openProfileEditor(for: profile)
                 } label: {
                     Image(systemName: "info.circle")
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(colorScheme == .dark ? .white.opacity(0.55) : Color(nsColor: .secondaryLabelColor))
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
-                .focusEffectDisabled()
                 .help("Profile Details")
 
                 if browserState.canDeleteProfile(profile) {
@@ -179,11 +132,9 @@ struct ProfilesSettingsSection: View {
                     } label: {
                         Image(systemName: "trash")
                             .font(.system(size: 13, weight: .regular))
-                            .foregroundColor(colorScheme == .dark ? Color.red.opacity(0.85) : Color.red)
+                            .foregroundColor(colorScheme == .dark ? Color(nsColor: .systemRed).opacity(0.85) : Color(nsColor: .systemRed))
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
-                    .focusEffectDisabled()
                     .help("Delete Profile")
                 }
             }
@@ -197,7 +148,7 @@ struct ProfilesSettingsSection: View {
                 }
             }
             Button("Edit Profile…") {
-                editingProfile = profile
+                browserState.openProfileEditor(for: profile)
             }
             if browserState.canDeleteProfile(profile) {
                 Divider()
@@ -296,8 +247,6 @@ struct CreateProfileModalView: View {
                             .frame(height: 32)
                         }
                         .buttonStyle(.plain)
-                        .focusable(false)
-                        .focusEffectDisabled()
                     }
                 }
             }
@@ -330,85 +279,35 @@ struct CreateProfileModalView: View {
                             .frame(width: 34, height: 34)
                         }
                         .buttonStyle(.plain)
-                        .focusable(false)
-                        .focusEffectDisabled()
                     }
                 }
             }
 
             // Action Buttons
             HStack(spacing: 12) {
-                Button(action: onCancel) {
-                    HStack(spacing: 6) {
-                        Text("Cancel")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.92) : Color.primary)
-
-                        Text("ESC")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                    .fill(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.08))
-                            )
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(colorScheme == .dark ? Color.white.opacity(0.10) : Color.black.opacity(0.06))
-                    )
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.cancelAction)
-                .focusable(false)
-                .focusEffectDisabled()
+                LotusDialogCancelButton(action: onCancel)
 
                 Spacer()
 
-                Button {
+                LotusDialogActionButton(title: "Create Profile", isDestructive: false, showsReturnKeycap: true) {
                     let finalName = name.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !finalName.isEmpty else { return }
                     onSave(finalName, selectedIcon, selectedColor)
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("Create Profile")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(colorScheme == .dark ? Color.black : Color.white)
-
-                        Image(systemName: "return")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(colorScheme == .dark ? Color.black.opacity(0.65) : Color.white.opacity(0.85))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(colorScheme == .dark ? Color(white: 0.92) : Color.black)
-                    )
-                    .opacity(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.35 : 1.0)
                 }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.defaultAction)
                 .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .focusable(false)
-                .focusEffectDisabled()
             }
             .padding(.top, 4)
         }
         .padding(24)
-        .frame(width: 400)
+        .frame(width: 420)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(colorScheme == .dark ? Color(red: 0.13, green: 0.13, blue: 0.14) : Color(nsColor: .windowBackgroundColor))
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(colorScheme == .dark ? Color(red: 0.106, green: 0.106, blue: 0.114) : Color(red: 0.98, green: 0.98, blue: 0.99))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08), lineWidth: 1)
         )
-        .focusEffectDisabled()
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isNameFocused = true
@@ -518,8 +417,6 @@ struct EditProfileModalView: View {
                             .frame(height: 32)
                         }
                         .buttonStyle(.plain)
-                        .focusable(false)
-                        .focusEffectDisabled()
                     }
                 }
             }
@@ -552,92 +449,78 @@ struct EditProfileModalView: View {
                             .frame(width: 34, height: 34)
                         }
                         .buttonStyle(.plain)
-                        .focusable(false)
-                        .focusEffectDisabled()
                     }
                 }
             }
 
             // Action Buttons
             HStack(spacing: 12) {
-                Button(action: onCancel) {
-                    HStack(spacing: 6) {
-                        Text("Cancel")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.92) : Color.primary)
-
-                        Text("ESC")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.6) : Color.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                    .fill(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.08))
-                            )
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(colorScheme == .dark ? Color.white.opacity(0.10) : Color.black.opacity(0.06))
-                    )
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.cancelAction)
-                .focusable(false)
-                .focusEffectDisabled()
+                LotusDialogCancelButton(action: onCancel)
 
                 Spacer()
 
-                Button {
+                LotusDialogActionButton(title: "Save Changes", isDestructive: false, showsReturnKeycap: true) {
                     var updated = profile
                     let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
                     updated.name = trimmed.isEmpty ? profile.name : trimmed
                     updated.icon = selectedIcon
                     updated.color = selectedColor
                     onSave(updated)
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("Save Changes")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(colorScheme == .dark ? Color.black : Color.white)
-
-                        Image(systemName: "return")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(colorScheme == .dark ? Color.black.opacity(0.65) : Color.white.opacity(0.85))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(colorScheme == .dark ? Color(white: 0.92) : Color.black)
-                    )
-                    .opacity(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.35 : 1.0)
                 }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.defaultAction)
                 .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .focusable(false)
-                .focusEffectDisabled()
             }
             .padding(.top, 4)
         }
         .padding(24)
-        .frame(width: 400)
+        .frame(width: 420)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(colorScheme == .dark ? Color(red: 0.13, green: 0.13, blue: 0.14) : Color(nsColor: .windowBackgroundColor))
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(colorScheme == .dark ? Color(red: 0.106, green: 0.106, blue: 0.114) : Color(red: 0.98, green: 0.98, blue: 0.99))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08), lineWidth: 1)
         )
-        .focusEffectDisabled()
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isNameFocused = true
             }
+        }
+    }
+}
+
+// MARK: - Dialog Views for Overlay Presentation
+
+struct EditProfileDialogView: View {
+    let profile: Profile
+    let canDelete: Bool
+    let onSave: (Profile) -> Void
+    let onDelete: (Profile) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        LotusModalDialog(onCancel: onCancel) {
+            EditProfileModalView(
+                profile: profile,
+                canDelete: canDelete,
+                onSave: onSave,
+                onDelete: onDelete,
+                onCancel: onCancel
+            )
+        }
+    }
+}
+
+struct CreateProfileDialogView: View {
+    let onSave: (String, String, FolderColor) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        LotusModalDialog(onCancel: onCancel) {
+            CreateProfileModalView(
+                onSave: onSave,
+                onCancel: onCancel
+            )
         }
     }
 }

@@ -65,7 +65,7 @@ struct FindBarView: View {
                 ),
                 prompt: Text("Find in page").foregroundColor(foregroundPlaceholder)
             )
-            .font(.system(size: 13.5, weight: .regular))
+            .font(.system(size: 13, weight: .regular))
             .foregroundColor(foregroundPrimary)
             .textFieldStyle(.plain)
             .lineLimit(1)
@@ -94,13 +94,13 @@ struct FindBarView: View {
             ZStack(alignment: .trailing) {
                 if !isQueryEmpty {
                     Text(hasMatches ? "\(browserState.findCurrentMatch)/\(browserState.findTotalMatches)" : "0/0")
-                        .font(.system(size: 11.5, weight: .medium, design: .monospaced))
-                        .foregroundColor(hasMatches ? foregroundSecondary : Color.red.opacity(0.85))
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(hasMatches ? foregroundSecondary : Color(nsColor: .systemRed).opacity(0.85))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
                         .background(
                             RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                .fill(hasMatches ? (colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04)) : Color.red.opacity(0.12))
+                                .fill(hasMatches ? (colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04)) : Color(nsColor: .systemRed).opacity(0.12))
                         )
                         .transition(.opacity)
                 }
@@ -120,7 +120,7 @@ struct FindBarView: View {
                     browserState.findPrevious(for: activeTabId)
                 } label: {
                     Image(systemName: "chevron.up")
-                        .font(.system(size: 11.5, weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(hasMatches ? (isPrevHovered ? foregroundPrimary : foregroundSecondary) : foregroundSecondary.opacity(0.35))
                         .frame(width: 24, height: 24)
                         .background(
@@ -138,7 +138,7 @@ struct FindBarView: View {
                     browserState.findNext(for: activeTabId)
                 } label: {
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 11.5, weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(hasMatches ? (isNextHovered ? foregroundPrimary : foregroundSecondary) : foregroundSecondary.opacity(0.35))
                         .frame(width: 24, height: 24)
                         .background(
@@ -156,7 +156,7 @@ struct FindBarView: View {
                     browserState.closeFind(for: activeTabId)
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 10.5, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(isCloseHovered ? foregroundPrimary : foregroundSecondary)
                         .frame(width: 24, height: 24)
                         .background(

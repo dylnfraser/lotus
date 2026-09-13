@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 enum JavaScriptDialogKind {
     case alert(message: String, completion: () -> Void)
@@ -25,8 +26,6 @@ struct JavaScriptDialogView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var inputText: String = ""
-    @State private var isHoveringCancel: Bool = false
-    @State private var isHoveringConfirm: Bool = false
     @State private var hasHandled: Bool = false
     @FocusState private var isInputFocused: Bool
 
@@ -37,30 +36,6 @@ struct JavaScriptDialogView: View {
             _inputText = State(initialValue: defaultText ?? "")
         } else {
             _inputText = State(initialValue: "")
-        }
-    }
-
-    private var foregroundPrimary: Color {
-        colorScheme == .dark ? .white : Color(nsColor: .labelColor)
-    }
-
-    private var foregroundSecondary: Color {
-        colorScheme == .dark ? Color.white.opacity(0.65) : Color(nsColor: .secondaryLabelColor)
-    }
-
-    private var cardBackground: Color {
-        colorScheme == .dark ? Color(red: 0.13, green: 0.13, blue: 0.14) : Color(nsColor: .windowBackgroundColor)
-    }
-
-    private var cardStroke: Color {
-        colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.08)
-    }
-
-    private func secondaryButtonFill(isHovered: Bool) -> Color {
-        if colorScheme == .dark {
-            return isHovered ? Color.white.opacity(0.18) : Color.white.opacity(0.10)
-        } else {
-            return isHovered ? Color.black.opacity(0.10) : Color.black.opacity(0.06)
         }
     }
 
@@ -82,7 +57,7 @@ struct JavaScriptDialogView: View {
     var body: some View {
         ZStack {
             // Dimmed backdrop
-            Color.black.opacity(colorScheme == .dark ? 0.45 : 0.28)
+            Color.black.opacity(colorScheme == .dark ? 0.40 : 0.20)
                 .ignoresSafeArea()
                 .transition(.opacity)
                 .onTapGesture {
@@ -97,17 +72,18 @@ struct JavaScriptDialogView: View {
 
                 // Title
                 Text("“\(displayHost)”")
-                    .font(.system(size: 18.5, weight: .bold))
-                    .foregroundColor(foregroundPrimary)
+                    .font(.system(size: 16.5, weight: .bold))
+                    .foregroundColor(colorScheme == .dark ? .white : Color(nsColor: .labelColor))
                     .lineLimit(2)
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 8)
 
                 // Message Text
                 if !messageText.isEmpty {
                     ScrollView(.vertical, showsIndicators: true) {
                         Text(messageText)
-                            .font(.system(size: 13.5, weight: .regular))
-                            .foregroundColor(foregroundSecondary)
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundColor(colorScheme == .dark ? Color.white.opacity(0.68) : Color(nsColor: .secondaryLabelColor))
+                            .lineSpacing(2)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -115,7 +91,7 @@ struct JavaScriptDialogView: View {
                     .padding(.bottom, isPrompt ? 14 : 22)
                 } else {
                     Spacer()
-                        .frame(height: isPrompt ? 10 : 16)
+                        .frame(height: isPrompt ? 8 : 14)
                 }
 
                 // Prompt Input Box
@@ -123,8 +99,7 @@ struct JavaScriptDialogView: View {
                     TextField("", text: $inputText)
                         .textFieldStyle(.plain)
                         .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(foregroundPrimary)
-                        .focused($isInputFocused)
+                        .foregroundColor(colorScheme == .dark ? .white : Color(nsColor: .labelColor))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(
@@ -133,8 +108,9 @@ struct JavaScriptDialogView: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .stroke(colorScheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.12), lineWidth: 1)
+                                .stroke(colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.10), lineWidth: 1)
                         )
+                        .focused($isInputFocused)
                         .onSubmit {
                             handleConfirm()
                         }
@@ -142,84 +118,34 @@ struct JavaScriptDialogView: View {
                 }
 
                 // Buttons row
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Spacer(minLength: 12)
 
                     if showsCancelButton {
-                        // Cancel button
-                        Button {
+                        LotusDialogCancelButton {
                             handleCancel()
-                        } label: {
-                            HStack(spacing: 6) {
-                                Text("Cancel")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(foregroundPrimary)
-
-                                Text("ESC")
-                                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
-                                    .foregroundColor(foregroundSecondary)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 2)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                            .fill(colorScheme == .dark ? Color.white.opacity(0.10) : Color.black.opacity(0.08))
-                                    )
-                            }
-                            .padding(.horizontal, 13)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(secondaryButtonFill(isHovered: isHoveringCancel))
-                            )
                         }
-                        .buttonStyle(.plain)
-                        .keyboardShortcut(.escape, modifiers: [])
-                        .onHover { isHoveringCancel = $0 }
                     }
 
-                    // Confirm / OK button
-                    Button {
+                    LotusDialogActionButton(title: "OK", isDestructive: false, showsReturnKeycap: true) {
                         handleConfirm()
-                    } label: {
-                        HStack(spacing: 5) {
-                            Text("OK")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white)
-
-                            Image(systemName: "return")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.white.opacity(0.85))
-                        }
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 9)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(isHoveringConfirm ? Color(red: 0.18, green: 0.55, blue: 0.98) : Color(red: 0.10, green: 0.45, blue: 0.90))
-                        )
                     }
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.return, modifiers: [])
-                    .onHover { isHoveringConfirm = $0 }
                 }
             }
-            .padding(22)
-            .frame(width: 440)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 22)
+            .frame(width: 430)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(cardBackground)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(colorScheme == .dark ? Color(red: 0.106, green: 0.106, blue: 0.114) : Color(red: 0.98, green: 0.98, blue: 0.99))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(cardStroke, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.55 : 0.18), radius: 30, x: 0, y: 14)
-            .offset(y: -45)
-            .transition(
-                .asymmetric(
-                    insertion: .offset(y: -14).combined(with: .opacity),
-                    removal: .offset(y: -14).combined(with: .opacity)
-                )
-            )
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.48 : 0.16), radius: 28, x: 0, y: 12)
+            .offset(y: -30)
+            .transition(.lotusPopupSlideDown)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .zIndex(100)
@@ -250,81 +176,36 @@ struct JavaScriptDialogView: View {
 
     @ViewBuilder
     private var iconSquircle: some View {
-        switch request.kind {
-        case .alert:
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 1.0, green: 0.72, blue: 0.25),
-                                Color(red: 0.95, green: 0.52, blue: 0.10)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 38, height: 38)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.10), lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.25 : 0.12), radius: 5, y: 2)
-
-                Image(systemName: "exclamationmark.bubble.fill")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.95))
+        let (color, iconName): (Color, String) = {
+            switch request.kind {
+            case .alert:
+                return (Color(nsColor: .systemOrange), "exclamationmark.bubble.fill")
+            case .confirm:
+                return (Color(nsColor: .systemBlue), "questionmark.bubble.fill")
+            case .prompt:
+                return (Color(nsColor: .systemTeal), "text.bubble.fill")
             }
+        }()
 
-        case .confirm:
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.35, green: 0.65, blue: 1.0),
-                                Color(red: 0.15, green: 0.45, blue: 0.90)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+        ZStack {
+            RoundedRectangle(cornerRadius: 8.5, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [color.opacity(0.9), color],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
-                    .frame(width: 38, height: 38)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.10), lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.25 : 0.12), radius: 5, y: 2)
+                )
+                .frame(width: 36, height: 36)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8.5, style: .continuous)
+                        .stroke(colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.08), lineWidth: 0.75)
+                )
+                .shadow(color: Color.black.opacity(0.14), radius: 3, y: 1.5)
 
-                Image(systemName: "questionmark.bubble.fill")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.95))
-            }
-
-        case .prompt:
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.30, green: 0.78, blue: 0.75),
-                                Color(red: 0.12, green: 0.58, blue: 0.62)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 38, height: 38)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.10), lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.25 : 0.12), radius: 5, y: 2)
-
-                Image(systemName: "text.bubble.fill")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.95))
-            }
+            Image(systemName: iconName)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white)
         }
     }
 

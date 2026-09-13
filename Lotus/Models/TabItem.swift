@@ -69,7 +69,7 @@ struct TabItem: Identifiable, Hashable, Equatable, Codable {
     }
 
     var faviconURL: URL? {
-        if url?.absoluteString.starts(with: "lotus://") == true { return nil }
+        if url?.isLotusPage == true { return nil }
         if let custom = customFaviconURL { return custom }
         guard let host = url?.host, !host.isEmpty else { return nil }
         var components = URLComponents()

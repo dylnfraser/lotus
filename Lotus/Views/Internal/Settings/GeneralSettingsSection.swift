@@ -122,14 +122,9 @@ private struct DefaultBrowserSettingsRow: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
             } else {
-                Button("Set as Default…") {
+                LotusSettingsButton(title: "Set as Default…") {
                     setAsDefault()
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-                .frame(width: 140, height: 28, alignment: .trailing)
-                .focusable(false)
-                .focusEffectDisabled()
             }
         }
         .padding(.horizontal, 14)
@@ -183,8 +178,6 @@ private struct SearchEngineSettingsRow: View {
                         .padding(6)
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
-                .focusEffectDisabled()
             }
             .padding(.horizontal, 14)
             .frame(height: 50)
@@ -206,23 +199,12 @@ private struct SearchEngineSettingsRow: View {
 
                         Spacer()
 
-                        Button {
+                        LotusSettingsButton(title: "Add Custom Engine", systemImage: "plus") {
                             newEngineName = ""
                             newEngineShortcut = ""
                             newEngineURLTemplate = ""
                             isAddSheetPresented = true
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 10, weight: .semibold))
-                                Text("Add Custom Engine")
-                                    .font(.system(size: 11, weight: .medium))
-                            }
-                            .foregroundColor(Color.accentColor)
                         }
-                        .buttonStyle(.plain)
-                        .focusable(false)
-                        .focusEffectDisabled()
                     }
                     .padding(.horizontal, 14)
                     .padding(.top, 4)
@@ -264,18 +246,16 @@ private struct SearchEngineSettingsRow: View {
                                     } label: {
                                         Image(systemName: "trash")
                                             .font(.system(size: 10))
-                                            .foregroundColor(.red.opacity(0.7))
+                                            .foregroundColor(Color(nsColor: .systemRed).opacity(0.7))
                                     }
                                     .buttonStyle(.plain)
-                                    .focusable(false)
-                                    .focusEffectDisabled()
                                     .padding(.trailing, 4)
                                     .help("Delete Custom Search Engine")
                                 }
 
                                 if isSelected {
                                     Image(systemName: "checkmark")
-                                        .font(.system(size: 11.5, weight: .semibold))
+                                        .font(.system(size: 12, weight: .semibold))
                                         .foregroundColor(Color.accentColor)
                                         .frame(width: 20, height: 20)
                                 }
@@ -302,25 +282,34 @@ private struct SearchEngineSettingsRow: View {
                     .foregroundColor(.secondary)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    TextField("Name (e.g. Perplexity)", text: $newEngineName)
-                        .textFieldStyle(.roundedBorder)
+                    SettingsInputField(
+                        placeholder: "Name (e.g. Perplexity)",
+                        text: $newEngineName
+                    )
 
-                    TextField("Shortcut (optional, e.g. px)", text: $newEngineShortcut)
-                        .textFieldStyle(.roundedBorder)
+                    SettingsInputField(
+                        placeholder: "Shortcut (optional, e.g. px)",
+                        text: $newEngineShortcut
+                    )
 
-                    TextField("Search URL (e.g. https://www.perplexity.ai/search?q={searchTerms})", text: $newEngineURLTemplate)
-                        .textFieldStyle(.roundedBorder)
+                    SettingsInputField(
+                        placeholder: "Search URL (e.g. https://www.perplexity.ai/search?q={searchTerms})",
+                        text: $newEngineURLTemplate
+                    )
                 }
 
                 HStack {
-                    Button("Cancel") {
+                    LotusSettingsButton(title: "Cancel") {
                         isAddSheetPresented = false
                     }
                     .keyboardShortcut(.cancelAction)
 
                     Spacer()
 
-                    Button("Add Engine") {
+                    LotusSettingsButton(
+                        title: "Add Engine",
+                        isDisabled: newEngineName.trimmingCharacters(in: .whitespaces).isEmpty || newEngineURLTemplate.trimmingCharacters(in: .whitespaces).isEmpty
+                    ) {
                         let cleanName = newEngineName.trimmingCharacters(in: .whitespaces)
                         let cleanShortcut = newEngineShortcut.trimmingCharacters(in: CharacterSet(charactersIn: "!").union(.whitespaces))
                         let cleanURL = newEngineURLTemplate.trimmingCharacters(in: .whitespaces)
@@ -334,7 +323,6 @@ private struct SearchEngineSettingsRow: View {
                         isAddSheetPresented = false
                     }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(newEngineName.trimmingCharacters(in: .whitespaces).isEmpty || newEngineURLTemplate.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
             .padding(20)

@@ -104,8 +104,14 @@ final class BrowserState: NSObject, ObservableObject, WKNavigationDelegate, WKUI
     @Published var isWebInputFocused: Bool = false
     @Published var isQuitConfirmationPresented: Bool = false
     @Published var folderToCloseConfirmation: UUID? = nil
-    @Published var pendingPopupRequest: PopupConfirmationRequest? = nil
+    var onOpenNewWindow: ((URL, Bool) -> Void)?
+
+    func requestOpenNewWindow(url: URL, isPrivate: Bool = false) {
+        onOpenNewWindow?(url, isPrivate)
+    }
     @Published var profileToDeleteConfirmation: Profile? = nil
+    @Published var profileToEdit: Profile? = nil
+    @Published var isCreatingProfile: Bool = false
     @Published var deleteBangConfirmation: CustomBang? = nil
     @Published var historyConfirmation: HistoryConfirmationType? = nil
     @Published var downloadConfirmation: DownloadConfirmationType? = nil
@@ -316,7 +322,7 @@ final class BrowserState: NSObject, ObservableObject, WKNavigationDelegate, WKUI
     // MARK: - Focus
 
     var isAnyTextInputFocused: Bool {
-        if isCommandPaletteOpen || isFindPresented || folderToCloseConfirmation != nil || isQuitConfirmationPresented || pendingPopupRequest != nil || isClearAllDataConfirmationPresented || profileToDeleteConfirmation != nil || deleteBangConfirmation != nil || historyConfirmation != nil || downloadConfirmation != nil || bookmarkConfirmation != nil || websiteDataConfirmation != nil || activeJavaScriptDialog != nil {
+        if isCommandPaletteOpen || isFindPresented || folderToCloseConfirmation != nil || isQuitConfirmationPresented || isClearAllDataConfirmationPresented || profileToDeleteConfirmation != nil || deleteBangConfirmation != nil || historyConfirmation != nil || downloadConfirmation != nil || bookmarkConfirmation != nil || websiteDataConfirmation != nil || activeJavaScriptDialog != nil || profileToEdit != nil || isCreatingProfile {
             return true
         }
         if let responder = NSApp.keyWindow?.firstResponder {

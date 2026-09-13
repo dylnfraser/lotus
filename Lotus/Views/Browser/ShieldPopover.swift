@@ -77,11 +77,11 @@ struct ShieldPopover: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Shields")
-                        .font(.system(size: 13.5, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(foregroundPrimary)
 
                     Text(domainName)
-                        .font(.system(size: 11.5, weight: .regular))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(foregroundSecondary)
                         .lineLimit(1)
                 }
@@ -244,24 +244,24 @@ struct ShieldPopover: View {
                                 .frame(width: 30, height: 30)
 
                             Image(systemName: "wand.and.stars")
-                                .font(.system(size: 14.5, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(currentAccentColor)
                         }
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Zap Element on Page")
-                                .font(.system(size: 12.5, weight: .semibold))
+                                .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(foregroundPrimary)
 
                             Text("Click to permanently block any element")
-                                .font(.system(size: 10.5, weight: .regular))
+                                .font(.system(size: 11, weight: .regular))
                                 .foregroundColor(foregroundSecondary)
                         }
 
                         Spacer()
 
                         Text("⌘⌥Z")
-                            .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundColor(foregroundSecondary)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 3.5)
@@ -298,7 +298,7 @@ struct ShieldPopover: View {
                 browserState.addTabBelow(title: "Settings", url: .lotusSettings, select: true)
             } label: {
                 HStack(spacing: 6) {
-                    Text("Shields & Privacy Settings...")
+                    Text("Shields & Privacy Settings…")
                         .font(.system(size: 12, weight: .medium))
                     Spacer()
                     Image(systemName: "arrow.up.right")
@@ -311,13 +311,11 @@ struct ShieldPopover: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .focusable(false)
         }
         .frame(width: 300)
         .background(
             VisualEffectView(material: .popover, blendingMode: .withinWindow)
         )
-        .focusable(false)
     }
 
     private func protectionFeatureRow(icon: String, title: String, status: String) -> some View {
@@ -328,13 +326,13 @@ struct ShieldPopover: View {
                 .frame(width: 14)
 
             Text(title)
-                .font(.system(size: 11.5, weight: .regular))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundColor(foregroundPrimary.opacity(0.9))
 
             Spacer()
 
             Text(status)
-                .font(.system(size: 10.5, weight: .medium))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(status == "Blocked" || status == "Hidden" ? foregroundSecondary : foregroundSecondary.opacity(0.5))
         }
     }

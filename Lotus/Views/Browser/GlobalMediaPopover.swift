@@ -38,7 +38,7 @@ struct GlobalMediaPopover: View {
                         .font(.system(size: 22, weight: .light))
                         .foregroundColor(.secondary.opacity(0.6))
                     Text("No audio or video playing")
-                        .font(.system(size: 11.5))
+                        .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
@@ -91,7 +91,7 @@ struct GlobalMediaPopover: View {
 
             if let title = mediaState?.mediaTitle, !title.isEmpty {
                 Text(title)
-                    .font(.system(size: 12.5, weight: .medium))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.primary)
                     .lineLimit(1)
                     .truncationMode(.tail)

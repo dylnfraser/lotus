@@ -1208,7 +1208,7 @@ enum UserScripts {
 
             var badge = document.createElement('div');
             badge.id = '__lotus_zap_badge__';
-            badge.style.cssText = 'position: absolute; top: -28px; left: 0; background: ' + accentColor + '; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; font-size: 11.5px; font-weight: 600; padding: 4px 8px; border-radius: 5px; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.30); z-index: 2147483647;';
+            badge.style.cssText = 'position: absolute; top: -28px; left: 0; background: ' + accentColor + '; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 5px; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.30); z-index: 2147483647;';
             highlightOverlay.appendChild(badge);
 
             document.documentElement.appendChild(highlightOverlay);

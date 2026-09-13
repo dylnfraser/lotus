@@ -38,42 +38,27 @@ private struct UserAgentSettingsRow: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "network")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.6) : .secondary)
-                    .frame(width: 22)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("User Agent")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.92) : .primary)
-
-                    Text("Browser identity identifier sent to web servers")
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.45) : .secondary)
-                }
-
-                Spacer()
-
-                Picker("User Agent", selection: $userAgentMode) {
-                    Text("Safari / WebKit (Default)").tag("safari")
-                    Text("Google Chrome").tag("chrome")
-                    Text("Custom").tag("custom")
-                }
-                .labelsHidden()
-                .untintedDropdown()
-                .frame(width: 190, alignment: .trailing)
-            }
-            .padding(.horizontal, 14)
-            .frame(height: 50)
+            SettingsPickerRow(
+                systemImage: "network",
+                title: "User Agent",
+                subtitle: "Browser identity identifier sent to web servers",
+                selection: $userAgentMode,
+                options: [
+                    ("safari", "Safari / WebKit (Default)"),
+                    ("chrome", "Google Chrome"),
+                    ("custom", "Custom")
+                ],
+                pickerWidth: 190
+            )
 
             if userAgentMode == "custom" {
                 SettingsDivider(leadingInset: 14)
 
                 HStack(spacing: 8) {
-                    TextField("Enter custom User-Agent string…", text: $customUserAgentString)
-                        .textFieldStyle(.roundedBorder)
+                    SettingsInputField(
+                        placeholder: "Enter custom User-Agent string…",
+                        text: $customUserAgentString
+                    )
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
@@ -90,7 +75,7 @@ private struct ClearDataSettingsRow: View {
         HStack(spacing: 12) {
             Image(systemName: "trash")
                 .font(.system(size: 14, weight: .regular))
-                .foregroundColor(colorScheme == .dark ? Color.red.opacity(0.85) : Color.red)
+                .foregroundColor(colorScheme == .dark ? Color(nsColor: .systemRed).opacity(0.85) : Color(nsColor: .systemRed))
                 .frame(width: 22)
 
             VStack(alignment: .leading, spacing: 1) {
@@ -105,19 +90,15 @@ private struct ClearDataSettingsRow: View {
 
             Spacer()
 
-            Button(role: .destructive) {
+            LotusSettingsButton(
+                title: "Clear All Data…",
+                systemImage: "trash",
+                isDestructive: true
+            ) {
                 withAnimation(.spring(response: 0.20, dampingFraction: 0.84)) {
                     browserState.isClearAllDataConfirmationPresented = true
                 }
-            } label: {
-                Text("Clear All Data…")
-                    .foregroundColor(Color.red)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.regular)
-            .frame(width: 150, height: 28, alignment: .trailing)
-            .focusable(false)
-            .focusEffectDisabled()
         }
         .padding(.horizontal, 14)
         .frame(height: 50)

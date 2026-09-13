@@ -21,6 +21,10 @@ extension BrowserState {
         profiles.first(where: { $0.id == currentProfileId }) ?? profiles.first ?? Profile.defaultProfile
     }
 
+    func profile(for id: UUID) -> Profile? {
+        profiles.first(where: { $0.id == id })
+    }
+
     var defaultProfileId: UUID {
         profiles.first(where: { $0.isDefault })?.id ?? Profile.defaultProfileId
     }
@@ -184,6 +188,32 @@ extension BrowserState {
                 UserDefaults.standard.set(profile.color.accentColorEquivalent.rawValue, forKey: "lotus.browser.accentColor")
             }
             profileStore.saveAsync(profiles)
+        }
+    }
+
+    // MARK: - Profile Editor & Creation Modals
+
+    func openProfileEditor(for profile: Profile) {
+        withAnimation(.spring(response: 0.20, dampingFraction: 0.84)) {
+            profileToEdit = profile
+        }
+    }
+
+    func closeProfileEditor() {
+        withAnimation(.spring(response: 0.20, dampingFraction: 0.84)) {
+            profileToEdit = nil
+        }
+    }
+
+    func openCreateProfile() {
+        withAnimation(.spring(response: 0.20, dampingFraction: 0.84)) {
+            isCreatingProfile = true
+        }
+    }
+
+    func closeCreateProfile() {
+        withAnimation(.spring(response: 0.20, dampingFraction: 0.84)) {
+            isCreatingProfile = false
         }
     }
 

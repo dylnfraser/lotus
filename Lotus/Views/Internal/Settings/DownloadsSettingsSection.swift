@@ -43,9 +43,7 @@ struct DownloadsSettingsSection: View {
                     subtitle: downloadCount == 0 ? "No download records" : "\(downloadCount) file\(downloadCount == 1 ? "" : "s") downloaded",
                     buttonTitle: "Open Downloads"
                 ) {
-                    if let url = URL(string: "lotus://downloads") {
-                        browserState.loadURL(url, in: tabId)
-                    }
+                    browserState.loadURL(.lotusDownloads, in: tabId)
                 }
             }
         }

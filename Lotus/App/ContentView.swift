@@ -20,6 +20,7 @@ struct ContentView: View {
 
     @Environment(\.openWindow) private var openWindow
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.controlActiveState) private var controlActiveState
     @AppStorage("lotus.browser.accentColor") private var accentColorKey: String = "white"
     @AppStorage("lotus.browser.showsBrowserFrame") private var showsBrowserFrame: Bool = true
     @AppStorage("lotus.browser.showsRoundedWebCorners") private var showsRoundedWebCorners: Bool = true
@@ -68,8 +69,7 @@ struct ContentView: View {
                     // MARK - Browser Containers
                     browserContentArea
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding([.top, .trailing, .bottom], showsBrowserFrame ? 6 : 0)
+                        .padding([.top, .trailing, .bottom], showsBrowserFrame ? 6 : 0)
                     .padding(.leading, isStaticSidebarPresented ? 0 : (showsBrowserFrame ? 6 : 0))
                 }
                 .animation(.spring(response: 0.32, dampingFraction: 0.85), value: isStaticSidebarPresented)
@@ -105,7 +105,7 @@ struct ContentView: View {
                    browserState.canOpenInSplit(id: drag.tab.id),
                    drag.location.x >= browserState.sidebarWidth {
                     let (leftCardFrame, rightCardFrame) = browserState.splitTargetFrames(windowWidth: windowWidth, windowHeight: windowHeight)
-                    let spaceAccent = browserState.currentProfile.color.color
+                    let (dragColor, _) = browserState.effectiveTabColor(for: drag.tab, colorScheme: colorScheme)
 
                     ZStack {
                         SplitDropZoneCard(
@@ -113,7 +113,7 @@ struct ContentView: View {
                             isHovered: drag.splitDropTarget == .left,
                             mouseLocation: drag.location,
                             cardFrame: leftCardFrame,
-                            accentColor: spaceAccent
+                            accentColor: dragColor
                         )
 
                         SplitDropZoneCard(
@@ -121,7 +121,7 @@ struct ContentView: View {
                             isHovered: drag.splitDropTarget == .right,
                             mouseLocation: drag.location,
                             cardFrame: rightCardFrame,
-                            accentColor: spaceAccent
+                            accentColor: dragColor
                         )
                     }
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
@@ -137,8 +137,8 @@ struct ContentView: View {
                         ? (drag.isHoveringPinZone ? drag.location.x : (sidebarW / 2))
                         : drag.location.x
 
-                    let dragThemeColor = browserState.themeColor(for: drag.tab.id)
-                    let dragIsThemeLight = browserState.isThemeLight(for: drag.tab.id)
+                    let dragProfile = browserState.profile(for: drag.tab.profileId ?? browserState.currentProfileId) ?? browserState.currentProfile
+                    let (dragColor, dragIsLight) = browserState.effectiveTabColor(for: drag.tab, colorScheme: colorScheme)
 
                     FloatingDragTab(
                         tab: drag.tab,
@@ -148,8 +148,9 @@ struct ContentView: View {
                         // Live preview: the ghost shrinks to folder width when
                         // the drop position would land inside a folder.
                         sidebarWidth: sidebarW - (drag.wouldJoinFolder ? 14 : 0),
-                        isThemeLight: dragIsThemeLight,
-                        activeThemeColor: dragThemeColor,
+                        isThemeLight: dragIsLight,
+                        activeTabBackgroundColor: dragColor,
+                        profileColor: dragProfile.color.color,
                         folder: drag.folder,
                         folderTabCount: drag.folder.map { browserState.folderTabs($0.id).count } ?? 0,
                         previewCount: drag.folder == nil && drag.draggedUnitCount > 1
@@ -185,7 +186,6 @@ struct ContentView: View {
         .overlay { flyingDownloadOverlay }
         .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.isQuitConfirmationPresented)
         .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.folderToCloseConfirmation != nil)
-        .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.pendingPopupRequest != nil)
         .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.isClearAllDataConfirmationPresented)
         .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.profileToDeleteConfirmation != nil)
         .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.deleteBangConfirmation != nil)
@@ -194,6 +194,8 @@ struct ContentView: View {
         .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.bookmarkConfirmation != nil)
         .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.websiteDataConfirmation != nil)
         .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.activeJavaScriptDialog != nil)
+        .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.profileToEdit != nil)
+        .animation(.spring(response: 0.20, dampingFraction: 0.84), value: browserState.isCreatingProfile)
         .animation(.spring(response: 0.32, dampingFraction: 0.85), value: isStaticSidebarPresented)
         .animation(.spring(response: 0.28, dampingFraction: 0.85), value: shouldShowFloatingSidebar)
         .onChange(of: browserState.isSidebarVisible) { _, visible in
@@ -234,6 +236,18 @@ struct ContentView: View {
         }
         .onAppear {
             AppDelegate.sharedBrowserState = browserState
+            browserState.onOpenNewWindow = { url, isPrivate in
+                AppDelegate.enqueuePendingURL(url, isPrivate: isPrivate)
+                openWindow(id: isPrivate ? "private" : "main")
+            }
+            if let pendingURL = AppDelegate.dequeuePendingURL(isPrivate: isPrivate) {
+                browserState.openTab(at: pendingURL, title: pendingURL.host ?? "New Tab")
+            }
+        }
+        .onChange(of: controlActiveState) { _, newState in
+            if newState == .key {
+                AppDelegate.sharedBrowserState = browserState
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .lotusOpenNewWindow)) { notif in
             handleOpenNewWindow(url: notif.object as? URL)
@@ -246,19 +260,17 @@ struct ContentView: View {
     }
 
     private func handleOpenNewWindow(url: URL?) {
-        openWindow(id: "main")
-        guard let url = url else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) {
-            AppDelegate.sharedBrowserState?.openTab(at: url, title: url.host ?? "New Tab")
+        if let url = url {
+            AppDelegate.enqueuePendingURL(url, isPrivate: false)
         }
+        openWindow(id: "main")
     }
 
     private func handleOpenNewPrivateWindow(url: URL?) {
-        openWindow(id: "private")
-        guard let url = url else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) {
-            AppDelegate.sharedBrowserState?.openTab(at: url, title: url.host ?? "New Tab")
+        if let url = url {
+            AppDelegate.enqueuePendingURL(url, isPrivate: true)
         }
+        openWindow(id: "private")
     }
 
     @ViewBuilder
@@ -268,9 +280,6 @@ struct ContentView: View {
         }
         if browserState.folderToCloseConfirmation != nil {
             FolderCloseConfirmationView(browserState: browserState)
-        }
-        if browserState.pendingPopupRequest != nil {
-            PopupConfirmationView(browserState: browserState)
         }
         if browserState.isClearAllDataConfirmationPresented {
             ClearAllDataConfirmationView(browserState: browserState)
@@ -367,6 +376,35 @@ struct ContentView: View {
         }
         if let dialog = browserState.activeJavaScriptDialog {
             JavaScriptDialogView(browserState: browserState, request: dialog)
+        }
+        if let profile = browserState.profileToEdit {
+            EditProfileDialogView(
+                profile: profile,
+                canDelete: browserState.canDeleteProfile(profile),
+                onSave: { updated in
+                    browserState.updateProfile(updated)
+                    browserState.profileToEdit = nil
+                },
+                onDelete: { toDelete in
+                    browserState.profileToEdit = nil
+                    browserState.requestDeleteProfile(toDelete)
+                },
+                onCancel: {
+                    browserState.profileToEdit = nil
+                }
+            )
+        }
+        if browserState.isCreatingProfile {
+            CreateProfileDialogView(
+                onSave: { name, icon, color in
+                    let created = browserState.createProfile(name: name, icon: icon, color: color)
+                    browserState.switchProfile(to: created.id, direction: .forward)
+                    browserState.isCreatingProfile = false
+                },
+                onCancel: {
+                    browserState.isCreatingProfile = false
+                }
+            )
         }
     }
 

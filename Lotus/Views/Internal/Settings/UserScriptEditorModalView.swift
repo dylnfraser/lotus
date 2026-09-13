@@ -196,66 +196,17 @@ struct UserScriptEditorModalView: View {
             Spacer(minLength: 16)
 
             // MARK: - Action Buttons
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 // Cancel
-                Button(action: onCancel) {
-                    HStack(spacing: 7) {
-                        Text("Cancel")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(labelColor)
-                        Text("ESC")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .foregroundColor(subtitleColor)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2.5)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                    .fill(fieldBackground)
-                            )
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                            .fill(fieldBackground)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                            .stroke(fieldBorder, lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.cancelAction)
-                .focusable(false)
-                .focusEffectDisabled()
+                LotusDialogCancelButton(action: onCancel)
 
                 Spacer()
 
                 // Save
-                Button {
+                LotusDialogActionButton(title: mode.actionButtonTitle, isDestructive: false, showsReturnKeycap: true) {
                     saveScript()
-                } label: {
-                    HStack(spacing: 7) {
-                        Text(mode.actionButtonTitle)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(colorScheme == .dark ? Color.black : Color.white)
-                        Image(systemName: "return")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(colorScheme == .dark ? Color.black.opacity(0.55) : Color.white.opacity(0.80))
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                            .fill(colorScheme == .dark ? Color(white: 0.92) : Color.black)
-                    )
-                    .opacity(isValid ? 1.0 : 0.35)
                 }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.defaultAction)
                 .disabled(!isValid)
-                .focusable(false)
-                .focusEffectDisabled()
             }
             .padding(.horizontal, 28)
             .padding(.bottom, 26)
@@ -263,7 +214,6 @@ struct UserScriptEditorModalView: View {
         }
         .frame(width: 500)
         .frame(minHeight: 560)
-        .focusEffectDisabled()
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 focusedField = .name

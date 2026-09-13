@@ -80,10 +80,6 @@ struct BrowserToolbar: View {
     }
 
     private var hairlineAccentColor: Color {
-        let url = browserState.url(for: activeTabId)
-        if let host = url?.host?.lowercased(), host.contains("apple.com") {
-            return colorScheme == .dark ? Color.white : Color.black
-        }
         if let faviconURL = browserState.tab(for: activeTabId)?.faviconURL,
            let extracted = FaviconColorExtractor.shared.color(for: faviconURL) {
             return extracted
@@ -259,12 +255,12 @@ struct BrowserToolbar: View {
             ZStack {
                 if isLoading {
                     Image(systemName: "xmark")
-                        .font(.system(size: 10.5, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .frame(width: 14, height: 14, alignment: .center)
                         .transition(.reloadTransition)
                 } else {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 11.5, weight: .regular))
+                        .font(.system(size: 12, weight: .regular))
                         .frame(width: 14, height: 14, alignment: .center)
                         .transition(.reloadTransition)
                 }
@@ -288,6 +284,14 @@ struct BrowserToolbar: View {
                 Label("Force Reload (Bypass Cache)", systemImage: "arrow.clockwise.circle")
             }
         }
+    }
+
+    private var addressBarLeadingPadding: CGFloat {
+        var padding: CGFloat = 8
+        if shouldShowSecurityLock {
+            padding += 20
+        }
+        return padding
     }
 
     private var addressBarTrailingPadding: CGFloat {
@@ -315,14 +319,34 @@ struct BrowserToolbar: View {
                     .padding(.trailing, 6)
             }
 
-            ZStack(alignment: .trailing) {
-                if centerURLPreview && !isInputHovered {
-                    // Centered prettified preview with lock icon
-                    HStack(spacing: 4) {
-                        if shouldShowSecurityLock {
-                            securityLockButton(for: currentURL)
-                        }
+            ZStack(alignment: .leading) {
+                // Leading elements: Lock / Security icon and Copy Feedback Chip (always left-aligned)
+                HStack(spacing: 5) {
+                    if shouldShowSecurityLock {
+                        securityLockButton(for: currentURL)
+                    }
 
+                    if let feedback = urlCopyFeedback {
+                        URLCopyFeedbackChip(feedback: feedback, theme: theme)
+                            .id(feedback.id)
+                            .transition(
+                                .asymmetric(
+                                    insertion: .scale(scale: 0.88, anchor: .leading)
+                                        .combined(with: .opacity)
+                                        .animation(.spring(response: 0.28, dampingFraction: 0.78)),
+                                    removal: .scale(scale: 0.88, anchor: .leading)
+                                        .combined(with: .opacity)
+                                        .animation(.easeInOut(duration: 0.20))
+                                )
+                            )
+                    }
+                }
+                .padding(.leading, 7)
+                .zIndex(2)
+
+                if centerURLPreview && !isInputHovered {
+                    // Centered prettified preview
+                    HStack(spacing: 4) {
                         if let host = prettifiedHost {
                             Text(host)
                                 .font(.system(size: 13, weight: .regular))
@@ -345,28 +369,23 @@ struct BrowserToolbar: View {
                                 .foregroundColor(theme.foregroundSecondary)
                         }
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.leading, addressBarLeadingPadding)
+                    .padding(.trailing, addressBarTrailingPadding)
                     .padding(.vertical, 5)
-                    .opacity(urlCopyFeedback != nil ? 0 : 1)
                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                    .transaction { $0.animation = nil }
                 } else {
                     // Left-aligned layout (when hovering to see real URL or center preview is off)
                     HStack(spacing: 0) {
-                        if shouldShowSecurityLock {
-                            securityLockButton(for: currentURL)
-                                .padding(.leading, 7)
-                        }
-
                         if isInputHovered && !urlInputText.isEmpty {
                             Text(urlInputText)
                                 .font(.system(size: 13, weight: .regular))
                                 .foregroundColor(theme.foregroundPrimary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
-                                .padding(.leading, shouldShowSecurityLock ? 4 : 8)
+                                .padding(.leading, addressBarLeadingPadding)
                                 .padding(.trailing, addressBarTrailingPadding)
                                 .padding(.vertical, 5)
-                                .opacity(urlCopyFeedback != nil ? 0 : 1)
                         } else if let host = prettifiedHost {
                             HStack(spacing: 4) {
                                 Text(host)
@@ -385,39 +404,28 @@ struct BrowserToolbar: View {
                                         .truncationMode(.tail)
                                 }
                             }
-                            .padding(.leading, shouldShowSecurityLock ? 4 : 8)
+                            .padding(.leading, addressBarLeadingPadding)
                             .padding(.trailing, addressBarTrailingPadding)
                             .padding(.vertical, 5)
-                            .opacity(urlCopyFeedback != nil ? 0 : 1)
                         } else {
                             Text("Search the web or type a URL")
                                 .font(.system(size: 13, weight: .regular))
                                 .foregroundColor(theme.foregroundSecondary)
-                                .padding(.leading, shouldShowSecurityLock ? 4 : 8)
+                                .padding(.leading, addressBarLeadingPadding)
                                 .padding(.trailing, addressBarTrailingPadding)
                                 .padding(.vertical, 5)
-                                .opacity(urlCopyFeedback != nil ? 0 : 1)
                         }
 
                         Spacer(minLength: 0)
                     }
                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                }
-
-                if let feedback = urlCopyFeedback {
-                    URLCopyFeedbackToast(feedback: feedback, theme: theme, accentColor: hairlineAccentColor)
-                        .id(feedback.id)
-                        .transition(
-                            .asymmetric(
-                                insertion: .offset(y: 12).combined(with: .opacity),
-                                removal: .offset(y: -12).combined(with: .opacity)
-                            )
-                        )
-                        .allowsHitTesting(false)
+                    .transaction { $0.animation = nil }
                 }
 
                 // Trailing embedded elements (Zoom pill + Bookmark button + Split View button)
                 HStack(spacing: 4) {
+                    Spacer(minLength: 0)
+
                     if isZoomIndicatorVisible || currentZoomLevel != 1.0 {
                         ZoomIndicatorPill(
                             zoomLevel: currentZoomLevel,
@@ -442,7 +450,7 @@ struct BrowserToolbar: View {
                     let shouldShowSplit = isInputHovered
                     let group = browserState.splitGroup(containing: activeTabId)
                     let activeProfileId = browserState.tab(for: activeTabId)?.profileId ?? browserState.currentProfileId
-                    let otherTabs = browserState.tabs.filter { ($0.profileId ?? browserState.defaultProfileId) == activeProfileId && (group == nil ? $0.id != activeTabId : !group!.contains($0.id)) && !$0.isPinned }
+                    let otherTabs = browserState.tabs.filter { ($0.profileId ?? browserState.defaultProfileId) == activeProfileId && !(group?.contains($0.id) ?? ($0.id == activeTabId)) && !$0.isPinned }
 
                     let isLeftPane = group?.first == activeTabId
                     let splitIconName: String = isSplitActive
@@ -496,7 +504,7 @@ struct BrowserToolbar: View {
                             }
                         } label: {
                             Image(systemName: splitIconName)
-                                .font(.system(size: 11.5, weight: isSplitActive ? .semibold : .regular))
+                                .font(.system(size: 12, weight: isSplitActive ? .semibold : .regular))
                                 .foregroundColor(splitColor)
                                 .frame(width: 20, height: 20)
                                 .contentShape(Rectangle())
@@ -512,7 +520,6 @@ struct BrowserToolbar: View {
                         .menuIndicator(.hidden)
                         .fixedSize()
                         .focusable(false)
-                        .transition(.opacity.combined(with: .scale(scale: 0.90)))
                         .help(isSplitActive ? "Split View Active (Click to close, hold for options)" : "Split View (Click to split right, hold for options)")
                     }
                     
@@ -522,20 +529,19 @@ struct BrowserToolbar: View {
                             browserState.toggleBookmark(for: activeTabId)
                         } label: {
                             Image(systemName: isCurrentBookmarked ? "bookmark.fill" : "bookmark")
-                                .font(.system(size: 11.5, weight: isCurrentBookmarked ? .semibold : .regular))
+                                .font(.system(size: 12, weight: isCurrentBookmarked ? .semibold : .regular))
                                 .foregroundColor(bookmarkColor)
                                 .frame(width: 20, height: 20)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .focusable(false)
-                        .transition(.opacity.combined(with: .scale(scale: 0.90)))
                         .help(isCurrentBookmarked ? "Remove Bookmark (⌘D)" : "Bookmark Page (⌘D)")
                     }
                 }
                 .padding(.trailing, 4)
-                .animation(.easeInOut(duration: 0.16), value: isInputHovered)
             }
+            .transaction { $0.animation = nil }
             .frame(minWidth: 0, maxWidth: .infinity)
             .contentShape(Rectangle())
             .onTapGesture {
@@ -546,13 +552,12 @@ struct BrowserToolbar: View {
                 ZStack(alignment: .bottomLeading) {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(theme.inputBackground(isFocused: false, isHovered: isInputHovered))
-                        .animation(.easeInOut(duration: 0.15), value: isInputHovered)
 
                     HairlineProgressIndicator(browserState: browserState, tabId: activeTabId)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             )
-            .animation(.spring(response: 0.24, dampingFraction: 0.82), value: currentZoomLevel)
+            .transaction { $0.animation = nil }
             .onHover { hovering in
                 isInputHovered = hovering
             }
@@ -776,7 +781,7 @@ struct BrowserToolbar: View {
         let isSplitActive = browserState.isSplit(id: activeTabId)
         let group = browserState.splitGroup(containing: activeTabId)
         let activeProfileId = browserState.tab(for: activeTabId)?.profileId ?? browserState.currentProfileId
-        let otherTabs = browserState.tabs.filter { ($0.profileId ?? browserState.defaultProfileId) == activeProfileId && (group == nil ? $0.id != activeTabId : !group!.contains($0.id)) && !$0.isPinned }
+        let otherTabs = browserState.tabs.filter { ($0.profileId ?? browserState.defaultProfileId) == activeProfileId && !(group?.contains($0.id) ?? ($0.id == activeTabId)) && !$0.isPinned }
         let isLeftPane = group?.first == activeTabId
         let splitIconName: String = isSplitActive
             ? (isLeftPane ? "rectangle.lefthalf.filled" : "rectangle.righthalf.filled")
@@ -828,7 +833,7 @@ struct BrowserToolbar: View {
             }
         } label: {
             Image(systemName: splitIconName)
-                .font(.system(size: 12.5, weight: .regular))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundColor(splitColor)
         } primaryAction: {
             if isSplitActive {
@@ -871,7 +876,7 @@ struct BrowserToolbar: View {
                 isSecurityPopoverPresented.toggle()
             } label: {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 10.5, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.orange)
                     .frame(width: 18, height: 18)
             }
@@ -885,7 +890,7 @@ struct BrowserToolbar: View {
                 isSecurityPopoverPresented.toggle()
             } label: {
                 Image(systemName: url.scheme?.lowercased() == "https" ? "lock.fill" : "exclamationmark.triangle.fill")
-                    .font(.system(size: 10.5, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(url.scheme?.lowercased() == "https" ? theme.foregroundSecondary.opacity(0.65) : .orange)
                     .frame(width: 18, height: 18)
             }
@@ -961,19 +966,61 @@ struct BrowserToolbar: View {
     }
 }
 
-private struct URLCopyFeedbackToast: View {
+private struct URLCopyFeedbackChip: View {
     let feedback: URLCopyFeedback
     let theme: BrowserChromeTheme
-    let accentColor: Color
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var isSuccess: Bool {
+        feedback.outcome == .copied || feedback.outcome == .cleanCopied
+    }
+
+    private var labelText: String {
+        switch feedback.outcome {
+        case .cleanCopied:
+            return "Clean URL"
+        case .copied:
+            return "Copied"
+        case .failed:
+            return "Failed"
+        }
+    }
+
+    private var iconName: String {
+        switch feedback.outcome {
+        case .cleanCopied, .copied:
+            return "checkmark"
+        case .failed:
+            return "exclamationmark.triangle"
+        }
+    }
 
     var body: some View {
-        Text(feedback.message)
-            .font(.system(size: 12.5, weight: .regular))
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .foregroundColor((feedback.outcome == .copied || feedback.outcome == .cleanCopied) ? theme.foregroundSecondary : .red.opacity(0.85))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
+        HStack(spacing: 3) {
+            Image(systemName: iconName)
+                .font(.system(size: 9, weight: .bold))
+
+            Text(labelText)
+                .font(.system(size: 11, weight: .semibold))
+                .lineLimit(1)
+        }
+        .foregroundColor(
+            isSuccess
+                ? theme.foregroundPrimary.opacity(0.85)
+                : .red.opacity(0.9)
+        )
+        .padding(.horizontal, 5.5)
+        .padding(.vertical, 2)
+        .background(
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(
+                    colorScheme == .dark
+                        ? Color.white.opacity(0.12)
+                        : Color.black.opacity(0.06)
+                )
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     }
 }
 

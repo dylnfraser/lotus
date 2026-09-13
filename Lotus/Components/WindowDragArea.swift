@@ -25,7 +25,6 @@ final class WindowDragNSView: NSView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        window?.isMovableByWindowBackground = true
     }
 
     override func mouseDown(with event: NSEvent) {

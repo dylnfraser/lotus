@@ -87,6 +87,7 @@ private final class PositionerView: NSView {
 
     func reposition() {
         guard let window = self.window,
+              !window.styleMask.contains(.fullScreen),
               let close = window.standardWindowButton(.closeButton),
               let min = window.standardWindowButton(.miniaturizeButton),
               let zoom = window.standardWindowButton(.zoomButton),

@@ -109,7 +109,7 @@ struct Tabstrip: View {
             return profile.color.color
         default: // "adaptive"
             if let tabId = profTabId {
-                return browserState.themeColor(for: tabId)
+                return browserState.effectiveTabTheme(for: tabId)?.color
                     ?? (isCurrent ? browserState.activeThemeColor : nil)
                     ?? Color(nsColor: .windowBackgroundColor)
             }
@@ -132,6 +132,9 @@ struct Tabstrip: View {
             let accent = LotusAccentColor(rawValue: browserState.currentProfile.color.accentColorEquivalent.rawValue) ?? .white
             return accent == .yellow
         default: // "adaptive"
+            if let theme = browserState.effectiveTabTheme(for: tabId) {
+                return theme.isLight
+            }
             if browserState.themeColor(for: tabId) == nil && (tabId != browserState.selectedTabId || browserState.activeThemeColor == nil) {
                 return colorScheme == .light
             }

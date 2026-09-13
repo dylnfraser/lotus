@@ -309,7 +309,7 @@ struct PinnedTabButton: View {
             Image(systemName: "apple.logo")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(colorScheme == .dark ? .white : .black)
-        } else if tab.url?.scheme == "lotus" || tab.url?.absoluteString.hasPrefix("lotus://") == true {
+        } else if tab.url?.isLotusPage == true {
             Image(systemName: tab.url?.internalPageSystemImage ?? "globe")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(colorScheme == .dark ? .white.opacity(0.85) : Color(nsColor: .labelColor))

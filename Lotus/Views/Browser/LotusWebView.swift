@@ -138,13 +138,13 @@ final class LotusWebView: WKWebView {
 
     @objc private func handleOpenLinkInNewWindow(_ sender: NSMenuItem) {
         if let linkURL = browserState?.lastContextMenuLinkURL {
-            NotificationCenter.default.post(name: .lotusOpenNewWindow, object: linkURL)
+            browserState?.requestOpenNewWindow(url: linkURL, isPrivate: false)
         }
     }
 
     @objc private func handleOpenLinkInPrivateWindow(_ sender: NSMenuItem) {
         if let linkURL = browserState?.lastContextMenuLinkURL {
-            NotificationCenter.default.post(name: .lotusOpenNewPrivateWindow, object: linkURL)
+            browserState?.requestOpenNewWindow(url: linkURL, isPrivate: true)
         }
     }
 

@@ -58,11 +58,11 @@ struct ZapHUDView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 6) {
                         Text("Zap Element")
-                            .font(.system(size: 12.5, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(foregroundPrimary)
 
                         Text("Active")
-                            .font(.system(size: 9.5, weight: .bold))
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundColor(currentAccentColor)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1.5)
@@ -73,7 +73,7 @@ struct ZapHUDView: View {
                     }
 
                     Text("Click any element to block it forever")
-                        .font(.system(size: 10.5, weight: .regular))
+                        .font(.system(size: 11, weight: .regular))
                         .foregroundColor(foregroundSecondary)
                 }
             }
@@ -93,7 +93,7 @@ struct ZapHUDView: View {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.system(size: 11, weight: .semibold))
                             Text("Undo")
-                                .font(.system(size: 11.5, weight: .medium))
+                                .font(.system(size: 12, weight: .medium))
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -114,7 +114,7 @@ struct ZapHUDView: View {
                         Image(systemName: "list.bullet")
                             .font(.system(size: 11, weight: .semibold))
                         Text(domainZaps.isEmpty ? "Zaps" : "Zaps (\(domainZaps.count))")
-                            .font(.system(size: 11.5, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                     }
                     .foregroundColor(domainZaps.isEmpty ? foregroundSecondary : foregroundPrimary)
                     .padding(.horizontal, 10)
@@ -183,7 +183,7 @@ struct ZapHUDView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Zapped on \(domainName)")
-                    .font(.system(size: 12.5, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(foregroundPrimary)
 
                 Spacer()
@@ -194,7 +194,7 @@ struct ZapHUDView: View {
                         browserState.applyZapRules(for: tabId)
                     }
                     .font(.system(size: 11, weight: .regular))
-                    .foregroundColor(.red.opacity(0.85))
+                    .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
                     .buttonStyle(.plain)
                 }
             }
@@ -209,7 +209,7 @@ struct ZapHUDView: View {
                         .padding(.top, 6)
 
                     Text("No elements zapped on this site yet.")
-                        .font(.system(size: 11.5))
+                        .font(.system(size: 11))
                         .foregroundColor(foregroundSecondary)
                         .padding(.bottom, 6)
                 }
@@ -219,14 +219,14 @@ struct ZapHUDView: View {
                     VStack(spacing: 6) {
                         ForEach(domainZaps) { zap in
                             HStack(spacing: 8) {
-                                VStack(alignment: .leading, spacing: 2) {
+                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(zap.elementSummary)
-                                        .font(.system(size: 11.5, weight: .medium, design: .monospaced))
+                                        .font(.system(size: 11, weight: .medium, design: .monospaced))
                                         .foregroundColor(foregroundPrimary)
                                         .lineLimit(1)
 
                                     Text(zap.selector)
-                                        .font(.system(size: 9.5, design: .monospaced))
+                                        .font(.system(size: 10, design: .monospaced))
                                         .foregroundColor(foregroundSecondary)
                                         .lineLimit(1)
                                 }
@@ -238,7 +238,7 @@ struct ZapHUDView: View {
                                 } label: {
                                     Image(systemName: "trash")
                                         .font(.system(size: 11))
-                                        .foregroundColor(.red.opacity(0.8))
+                                        .foregroundColor(Color(nsColor: .systemRed).opacity(0.8))
                                         .padding(4)
                                 }
                                 .buttonStyle(.plain)

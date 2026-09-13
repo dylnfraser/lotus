@@ -93,12 +93,23 @@ struct LotusDownloadsView: View {
 
     // MARK: - Colors
 
+    private var activeAccentColor: Color {
+        if !browserState.isPrivate {
+            if browserState.currentProfile.color == .grey {
+                return Color(nsColor: .controlAccentColor)
+            }
+            return browserState.currentProfile.color.color
+        }
+        let accent = LotusAccentColor(rawValue: UserDefaults.standard.string(forKey: "lotus.browser.accentColor") ?? "white") ?? .white
+        return accent.color
+    }
+
     private var foregroundPrimary: Color {
         colorScheme == .dark ? .white : Color(nsColor: .labelColor)
     }
 
     private var foregroundSecondary: Color {
-        colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
+        colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor)
     }
 
     private var foregroundPlaceholder: Color {
@@ -106,15 +117,21 @@ struct LotusDownloadsView: View {
     }
 
     private var cardFill: Color {
-        colorScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.03)
+        colorScheme == .dark
+            ? Color.white.opacity(0.05)
+            : Color(nsColor: .controlBackgroundColor)
     }
 
     private var cardStroke: Color {
-        colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.08)
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     private var separatorColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.05)
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     // MARK: - Body
@@ -122,10 +139,10 @@ struct LotusDownloadsView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(.vertical, showsIndicators: true) {
-                LazyVStack(alignment: .leading, spacing: 26) {
+                LazyVStack(alignment: .leading, spacing: 22) {
                     headerSection
-                        .padding(.top, 40)
-                        .padding(.bottom, -4)
+                        .padding(.top, 32)
+                        .padding(.bottom, 4)
 
                     if sections.isEmpty {
                         emptyState
@@ -147,14 +164,18 @@ struct LotusDownloadsView: View {
                         Spacer(minLength: 40)
                     }
                 }
-                .frame(maxWidth: 680)
-                .padding(.horizontal, 32)
+                .frame(maxWidth: 640)
+                .padding(.horizontal, 24)
                 .frame(maxWidth: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.clear)
-        .focusEffectDisabled()
+        .tint(activeAccentColor)
+        .accentColor(activeAccentColor)
+        .background(
+            (colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.09) : Color(nsColor: .windowBackgroundColor))
+                .ignoresSafeArea()
+        )
         .transaction { $0.animation = nil }
         .onAppear {
             refreshSections()
@@ -204,39 +225,38 @@ struct LotusDownloadsView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 18) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(systemName: "arrow.down.circle")
-                    .font(.system(size: 24, weight: .light))
-                    .foregroundColor(foregroundPrimary)
-
-                VStack(alignment: .leading, spacing: 1) {
+        VStack(spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Downloads")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 26, weight: .bold))
                         .foregroundColor(foregroundPrimary)
 
-                    Text("\(browserState.downloads(for: activeProfileId).count) files")
-                        .font(.system(size: 12, weight: .regular))
+                    let count = browserState.downloads(for: activeProfileId).count
+                    Text("\(count) \(count == 1 ? "file" : "files")")
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(foregroundSecondary)
                 }
 
                 Spacer()
 
-                if isSelecting {
-                    DownloadHeaderActionButton(
-                        title: "Delete \(selectedIds.count)",
-                        systemImage: "trash",
-                        isDestructive: true
-                    ) {
-                        browserState.downloadConfirmation = .deleteSelected(ids: selectedIds)
-                    }
+                HStack(spacing: 8) {
+                    if isSelecting {
+                        LotusHeaderActionButton(
+                            title: "Delete \(selectedIds.count)",
+                            systemImage: "trash",
+                            isDestructive: true
+                        ) {
+                            browserState.downloadConfirmation = .deleteSelected(ids: selectedIds)
+                        }
 
-                    DownloadHeaderActionButton(title: "Cancel", systemImage: nil, isDestructive: false) {
-                        selectedIds.removeAll()
-                    }
-                } else if !browserState.downloads(for: activeProfileId).isEmpty {
-                    DownloadHeaderActionButton(title: "Clear All", systemImage: nil, isDestructive: false) {
-                        browserState.downloadConfirmation = .clearAll(totalCount: browserState.downloads(for: activeProfileId).count)
+                        LotusHeaderActionButton(title: "Cancel", systemImage: nil, isDestructive: false) {
+                            selectedIds.removeAll()
+                        }
+                    } else if !browserState.downloads(for: activeProfileId).isEmpty {
+                        LotusHeaderActionButton(title: "Clear All", systemImage: nil, isDestructive: false) {
+                            browserState.downloadConfirmation = .clearAll(totalCount: browserState.downloads(for: activeProfileId).count)
+                        }
                     }
                 }
             }
@@ -244,7 +264,7 @@ struct LotusDownloadsView: View {
             // Search field
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(foregroundSecondary)
 
                 TextField(
@@ -268,13 +288,13 @@ struct LotusDownloadsView: View {
                 }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .frame(height: 42)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(cardFill)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(cardStroke, lineWidth: 1)
             )
         }
@@ -285,9 +305,10 @@ struct LotusDownloadsView: View {
     private func daySection(_ section: DownloadSection) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(section.title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(foregroundSecondary)
-                .padding(.leading, 14)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(foregroundPrimary)
+                .padding(.leading, 2)
+                .padding(.top, 8)
 
             VStack(spacing: 0) {
                 ForEach(Array(section.items.enumerated()), id: \.element.id) { index, item in
@@ -332,14 +353,14 @@ struct LotusDownloadsView: View {
                 }
             }
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(cardFill)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(cardStroke, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
@@ -423,7 +444,7 @@ private struct DownloadRowView: View {
     }
 
     private var foregroundSecondary: Color {
-        colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
+        colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor)
     }
 
     private var rowHoverFill: Color {
@@ -444,7 +465,7 @@ private struct DownloadRowView: View {
                     } else {
                         Image(systemName: item.systemIconName)
                             .font(.system(size: 15, weight: .regular))
-                            .foregroundColor(item.state == .failed ? Color.red.opacity(0.8) : Color.accentColor)
+                            .foregroundColor(item.state == .failed ? Color(nsColor: .systemRed).opacity(0.8) : Color.accentColor)
                     }
                 }
                 .frame(width: 20, height: 20)
@@ -479,7 +500,7 @@ private struct DownloadRowView: View {
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundColor(Color.accentColor)
                             } else {
-                                Text("• Downloading...")
+                                Text("• Downloading…")
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundColor(Color.accentColor)
                             }
@@ -492,11 +513,11 @@ private struct DownloadRowView: View {
                         } else if item.state == .paused {
                             Text("• Paused")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(Color.orange.opacity(0.9))
+                                .foregroundColor(Color(nsColor: .systemOrange).opacity(0.9))
                         } else if item.state == .failed {
                             Text("• Failed")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(Color.red.opacity(0.85))
+                                .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
                         } else if item.state == .cancelled {
                             Text("• Cancelled")
                                 .font(.system(size: 11, weight: .medium))
@@ -510,8 +531,8 @@ private struct DownloadRowView: View {
                 if isHovered && !isSelecting {
                     Button(action: onDelete) {
                         Image(systemName: "trash")
-                            .font(.system(size: 11.5, weight: .medium))
-                            .foregroundColor(Color.red.opacity(0.85))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
                             .padding(6)
                             .background(
                                 RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -527,7 +548,7 @@ private struct DownloadRowView: View {
                             onPause()
                         } label: {
                             Image(systemName: "pause.fill")
-                                .font(.system(size: 9.5, weight: .bold))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(foregroundSecondary)
                                 .padding(6)
                                 .background(
@@ -557,7 +578,7 @@ private struct DownloadRowView: View {
                             onResume()
                         } label: {
                             Image(systemName: "play.fill")
-                                .font(.system(size: 9.5, weight: .bold))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(Color.accentColor)
                                 .padding(6)
                                 .background(
@@ -602,7 +623,7 @@ private struct DownloadRowView: View {
                             item.revealInFinder()
                         } label: {
                             Image(systemName: "magnifyingglass")
-                                .font(.system(size: 11.5, weight: .medium))
+                                .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(foregroundSecondary)
                                 .padding(6)
                                 .background(
@@ -695,7 +716,7 @@ private struct DownloadSelectionCheckbox: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var foregroundSecondary: Color {
-        colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
+        colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor)
     }
 
     var body: some View {
@@ -720,56 +741,4 @@ private struct DownloadSelectionCheckbox: View {
     }
 }
 
-// MARK: - Download Header Action Button
 
-private struct DownloadHeaderActionButton: View {
-    let title: String
-    let systemImage: String?
-    let isDestructive: Bool
-    let action: () -> Void
-
-    @State private var isHovered: Bool = false
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var foreground: Color {
-        if isDestructive {
-            return colorScheme == .dark ? Color(red: 1.0, green: 0.45, blue: 0.42) : Color(red: 0.85, green: 0.15, blue: 0.12)
-        }
-        if isHovered {
-            return colorScheme == .dark ? .white : Color(nsColor: .labelColor)
-        }
-        return colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
-    }
-
-    private var hoverFill: Color {
-        if isDestructive {
-            return colorScheme == .dark ? Color(red: 1.0, green: 0.3, blue: 0.28).opacity(0.15) : Color(red: 0.9, green: 0.2, blue: 0.15).opacity(0.10)
-        }
-        return colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04)
-    }
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 10.5, weight: .semibold))
-                }
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-            }
-            .foregroundColor(foreground)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(isHovered ? hoverFill : Color.clear)
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-    }
-}

@@ -60,7 +60,7 @@ struct BangsSettingsSection: View {
                                 .foregroundColor(foregroundPrimary)
 
                             Text("Direct site search using triggers like !yt, !gh, !w, !r or custom engines")
-                                .font(.system(size: 11.5, weight: .regular))
+                                .font(.system(size: 11, weight: .regular))
                                 .foregroundColor(foregroundSecondary)
                         }
 
@@ -92,22 +92,19 @@ struct BangsSettingsSection: View {
                                 .foregroundColor(foregroundPrimary)
 
                             Text("Custom search trigger keyword, query URL schema, color and icon")
-                                .font(.system(size: 11.5, weight: .regular))
+                                .font(.system(size: 11, weight: .regular))
                                 .foregroundColor(foregroundSecondary)
                         }
 
                         Spacer()
 
-                        Button {
+                        LotusSettingsButton(
+                            title: "New Bang…",
+                            systemImage: "plus",
+                            isDisabled: !bangsEnabled
+                        ) {
                             isCreatingBang = true
-                        } label: {
-                            Text("New Bang…")
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.regular)
-                        .disabled(!bangsEnabled)
-                        .focusable(false)
-                        .focusEffectDisabled()
                     }
                     .padding(.horizontal, 14)
                     .frame(height: 50)
@@ -223,7 +220,7 @@ struct BangsSettingsSection: View {
                 }
 
                 Text(provider.triggers.map { "!\($0)" }.joined(separator: ", "))
-                    .font(.system(size: 11.5, weight: .regular, design: .monospaced))
+                    .font(.system(size: 11, weight: .regular, design: .monospaced))
                     .foregroundColor(foregroundSecondary)
             }
 
@@ -239,8 +236,6 @@ struct BangsSettingsSection: View {
                             .foregroundColor(foregroundSecondary)
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
-                    .focusEffectDisabled()
                     .help("Edit Custom Bang")
 
                     Button {
@@ -248,11 +243,9 @@ struct BangsSettingsSection: View {
                     } label: {
                         Image(systemName: "trash")
                             .font(.system(size: 13, weight: .regular))
-                            .foregroundColor(.red.opacity(0.85))
+                            .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
-                    .focusEffectDisabled()
                     .help("Delete Custom Bang")
                 }
 

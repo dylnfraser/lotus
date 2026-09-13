@@ -19,7 +19,7 @@ struct FolderContextMenuHeaderView: View {
             HStack(spacing: 6) {
                 let iconName = folder.icon ?? (folder.isArchive ? "archivebox.fill" : "folder.fill")
                 Image(systemName: iconName)
-                    .font(.system(size: 11.5, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(folder.color.color)
 
                 Text(folder.name)
@@ -255,8 +255,8 @@ final class FolderContextMenuNSView: NSView {
         headerItem.view = hostingView
         menu.addItem(headerItem)
 
-        // 2. Rename...
-        let renameItem = NSMenuItem(title: "Rename...", action: #selector(handleRename), keyEquivalent: "")
+        // 2. Rename…
+        let renameItem = NSMenuItem(title: "Rename…", action: #selector(handleRename), keyEquivalent: "")
         renameItem.target = self
         menu.addItem(renameItem)
 

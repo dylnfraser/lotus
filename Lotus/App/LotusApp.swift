@@ -206,7 +206,7 @@ private struct LotusMenuCommands: Commands {
             Button("Zoom In") {
                 AppDelegate.sharedBrowserState?.zoomIn()
             }
-            .keyboardShortcut("+", modifiers: .command)
+            .keyboardShortcut("=", modifiers: .command)
 
             Button("Zoom Out") {
                 AppDelegate.sharedBrowserState?.zoomOut()

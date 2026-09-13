@@ -471,7 +471,7 @@ struct CommandPalette: View {
 
                     if let subtitle = suggestion.subtitle, hasSubtitle {
                         Text("— \(subtitle)")
-                            .font(.system(size: 12.5))
+                            .font(.system(size: 12))
                             .fontWeight(isHighlighted ? .medium : .regular)
                             .foregroundColor(isHighlighted ? foregroundPrimary.opacity(0.70) : foregroundSecondary.opacity(0.75))
                             .lineLimit(1)

@@ -14,49 +14,12 @@ struct FloatingDragTab: View {
     let pinnedCardWidth: CGFloat
     let sidebarWidth: CGFloat
     let isThemeLight: Bool
-    let activeThemeColor: Color?
+    let activeTabBackgroundColor: Color
+    var profileColor: Color = .blue
     /// When set, the ghost renders a folder header instead of a tab.
     var folder: TabFolder? = nil
     var folderTabCount: Int = 0
     var previewCount: Int = 1
-
-    @AppStorage("lotus.browser.sidebarTabTintingMode") private var sidebarTabTintingMode: String = "adaptive"
-    @AppStorage("lotus.browser.accentColor") private var accentColorKey: String = "white"
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var effectiveIsThemeLight: Bool {
-        let isInternal = tab.url?.scheme == "lotus" || tab.url?.absoluteString.hasPrefix("lotus://") == true
-        if isInternal {
-            return colorScheme == .light
-        }
-        switch sidebarTabTintingMode {
-        case "neutral":
-            return colorScheme == .light
-        case "systemAccent":
-            let accent = LotusAccentColor(rawValue: accentColorKey) ?? .white
-            return accent == .yellow
-        default: // "adaptive"
-            if activeThemeColor == nil {
-                return colorScheme == .light
-            }
-            return isThemeLight
-        }
-    }
-
-    private var activeTabBackgroundColor: Color {
-        let isInternal = tab.url?.scheme == "lotus" || tab.url?.absoluteString.hasPrefix("lotus://") == true
-        if isInternal {
-            return Color(nsColor: .windowBackgroundColor)
-        }
-        switch sidebarTabTintingMode {
-        case "neutral":
-            return Color(nsColor: .windowBackgroundColor)
-        case "systemAccent":
-            return Color.accentColor
-        default: // "adaptive"
-            return activeThemeColor ?? Color(nsColor: .windowBackgroundColor)
-        }
-    }
 
     var body: some View {
         Group {
@@ -86,6 +49,7 @@ struct FloatingDragTab: View {
                 PinnedTabButton(
                     tab: tab,
                     isSelected: true,
+                    profileAccentColor: profileColor,
                     onSelect: {}
                 )
                 .frame(width: pinnedCardWidth)
@@ -96,7 +60,7 @@ struct FloatingDragTab: View {
                     selectedTabId: tab.id,
                     currentTabIds: [tab1.id, tab2.id],
                     sidebarWidth: sidebarWidth,
-                    isThemeLight: effectiveIsThemeLight,
+                    isThemeLight: isThemeLight,
                     activeTabBackgroundColor: activeTabBackgroundColor,
                     namespace: nil,
                     activeDrag: nil,
@@ -112,7 +76,7 @@ struct FloatingDragTab: View {
                     tab: tab,
                     isSelected: true,
                     isDragging: true,
-                    isThemeLight: effectiveIsThemeLight,
+                    isThemeLight: isThemeLight,
                     activeTabBackgroundColor: activeTabBackgroundColor,
                     sidebarWidth: sidebarWidth,
                     onSelect: {},
@@ -138,11 +102,11 @@ struct FloatingDragTab: View {
         .overlay(alignment: .topTrailing) {
             if folder == nil && previewCount > 1 {
                 Text("\(previewCount)")
-                    .font(.system(size: 10.5, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(isThemeLight ? .black : .white)
                     .padding(.horizontal, 6)
                     .frame(minHeight: 20)
-                    .background(Capsule(style: .continuous).fill(Color.accentColor))
+                    .background(Capsule(style: .continuous).fill(activeTabBackgroundColor))
                     .offset(x: 8, y: -8)
             }
         }

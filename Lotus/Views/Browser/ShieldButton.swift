@@ -40,7 +40,7 @@ struct ShieldButton: View {
                 let contrastColor = theme.themeColor != nil ? (theme.isThemeLight ? Color.black : Color.white) : Color.primary
                 let inactiveColor = contrastColor.opacity(0.40)
                 Image(systemName: isShieldActive ? "shield.fill" : "shield.slash.fill")
-                    .font(.system(size: 12.5, weight: .regular))
+                    .font(.system(size: 12, weight: .regular))
                     .foregroundColor(isShieldActive ? contrastColor : inactiveColor)
                     .opacity(isShieldActive ? 1.0 : 0.65)
                     .rotationEffect(.degrees(rotationAngle))

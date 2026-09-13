@@ -60,7 +60,7 @@ struct SecurityDetailsPopover: View {
             }
 
             Text(securityDescription)
-                .font(.system(size: 11.5))
+                .font(.system(size: 12))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -85,7 +85,6 @@ struct SecurityDetailsPopover: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .focusable(false)
 
                     if isCertificateExpanded {
                         VStack(alignment: .leading, spacing: 6) {
@@ -159,22 +158,20 @@ struct SecurityDetailsPopover: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
 
                 Button {
                     browserState.removeWebsiteData(for: host)
                 } label: {
                     HStack {
                         Label("Clear Cookies & Data", systemImage: "trash")
-                            .font(.system(size: 11.5, weight: .regular))
-                            .foregroundColor(.red.opacity(0.85))
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
                         Spacer()
                     }
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .focusable(false)
             }
         }
         .padding(14)
@@ -184,12 +181,12 @@ struct SecurityDetailsPopover: View {
     private func certRow(label: String, value: String) -> some View {
         HStack(alignment: .top, spacing: 6) {
             Text(label + ":")
-                .font(.system(size: 10.5, weight: .medium))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
                 .frame(width: 68, alignment: .leading)
 
             Text(value)
-                .font(.system(size: 10.5, weight: .regular))
+                .font(.system(size: 11, weight: .regular))
                 .foregroundColor(.primary)
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -201,7 +198,7 @@ struct SecurityDetailsPopover: View {
 
         return HStack {
             Label(perm.displayName, systemImage: perm.iconName)
-                .font(.system(size: 11.5))
+                .font(.system(size: 12))
                 .foregroundColor(.primary)
 
             Spacer()
@@ -220,7 +217,6 @@ struct SecurityDetailsPopover: View {
             .labelsHidden()
             .controlSize(.small)
             .frame(width: 80)
-            .focusable(false)
         }
     }
 
@@ -231,9 +227,9 @@ struct SecurityDetailsPopover: View {
     }
 
     private var securityBadgeColor: Color {
-        if isInternal { return .purple }
-        if isHTTPS { return .green }
-        return .orange
+        if isInternal { return Color(nsColor: .systemPurple) }
+        if isHTTPS { return Color(nsColor: .systemGreen) }
+        return Color(nsColor: .systemOrange)
     }
 
     private var securityTitle: String {

@@ -40,7 +40,7 @@ struct TabButton: View {
     }
 
     private var isInternalPage: Bool {
-        tab.url?.scheme == "lotus" || tab.url?.absoluteString.hasPrefix("lotus://") == true
+        tab.url?.isLotusPage == true
     }
 
     /// The sidebar sits on a translucent vibrancy background.
@@ -126,7 +126,7 @@ struct TabButton: View {
 
             if tab.isSnoozed && !isSelected {
                 Image(systemName: "moon.zzz.fill")
-                    .font(.system(size: 9.5, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(sidebarForegroundSecondary.opacity(0.8))
                     .help("Tab is snoozed to save memory (click to wake)")
             }
@@ -135,7 +135,7 @@ struct TabButton: View {
 
             Button(action: onClose) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 8.5, weight: .bold))
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundColor(isSelected ? selectedForegroundSecondary : sidebarForegroundSecondary)
                     .animation(.easeInOut(duration: 0.16), value: isSelected)
                     .frame(width: 14, height: 14)

@@ -42,7 +42,7 @@ extension BrowserState {
             let isLink = navigationAction.navigationType == .linkActivated
             let sourceProtocol = navigationAction.sourceFrame.securityOrigin.protocol.lowercased()
             let hasWebSourceOrigin = sourceProtocol == "http" || sourceProtocol == "https"
-            let isCurrentURLWeb = (webView.url != nil && !webView.url!.isLotusPage)
+            let isCurrentURLWeb = webView.url.map { !$0.isLotusPage } ?? false
 
             if isLink && isCurrentURLWeb {
                 decisionHandler(.cancel)
@@ -112,7 +112,7 @@ extension BrowserState {
 
     private func presentExternalURLConfirmation(for url: URL, from webView: WKWebView) {
         let appName = NSWorkspace.shared.urlForApplication(toOpen: url)?.deletingPathExtension().lastPathComponent
-        let targetDescription = appName != nil ? "“\(appName!)”" : "an external application"
+        let targetDescription = appName.map { "“\($0)”" } ?? "an external application"
         
         let alert = NSAlert()
         alert.messageText = "Open in \(targetDescription)?"
@@ -181,18 +181,6 @@ extension BrowserState {
         setupObservers(for: newTab.id, webView: newWebView)
 
         return newWebView
-    }
-
-    func confirmOpenPopup() {
-        guard let req = pendingPopupRequest else { return }
-        pendingPopupRequest = nil
-        if let targetURL = req.targetURL {
-            addTabBelow(currentTabId: req.sourceTabId, title: targetURL.host ?? "New Tab", url: targetURL, select: true)
-        }
-    }
-
-    func cancelOpenPopup() {
-        pendingPopupRequest = nil
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
@@ -396,7 +384,7 @@ extension BrowserState {
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <title>Source: \(currentURL.host ?? "Page")</title>
                 <style>
-                body { margin: 0; padding: 16px 20px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; line-height: 1.5; background: #18181A; color: #E4E4E7; tab-size: 4; }
+                body { margin: 0; padding: 16px 20px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 1.5; background: #18181A; color: #E4E4E7; tab-size: 4; }
                 @media (prefers-color-scheme: light) { body { background: #FFFFFF; color: #18181B; } }
                 pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
                 </style>

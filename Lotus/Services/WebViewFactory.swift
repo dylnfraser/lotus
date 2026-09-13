@@ -13,7 +13,7 @@ import WebKit
 enum WebViewFactory {
 
     static let safariUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_9) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
-    static let chromeUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_9) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    static let chromeUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
     static var currentUserAgent: String? {
         let mode = UserDefaults.standard.string(forKey: "lotus.browser.userAgentMode") ?? "safari"

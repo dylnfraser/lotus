@@ -60,4 +60,10 @@ enum ColorParser {
         let ns = NSColor(srgbRed: rNorm, green: gNorm, blue: bNorm, alpha: a)
         return ParsedThemeColor(color: Color(nsColor: ns), nsColor: ns, isLight: lum > 0.55)
     }
+
+    static func isLight(color: NSColor) -> Bool {
+        guard let srgb = color.usingColorSpace(.sRGB) else { return false }
+        let lum = 0.299 * Double(srgb.redComponent) + 0.587 * Double(srgb.greenComponent) + 0.114 * Double(srgb.blueComponent)
+        return lum > 0.55
+    }
 }

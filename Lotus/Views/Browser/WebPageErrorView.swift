@@ -50,7 +50,7 @@ struct WebPageErrorView: View {
                     // Title & Description
                     VStack(spacing: 8) {
                         Text(error.title)
-                            .font(.system(size: 19.5, weight: .semibold))
+                            .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(foregroundPrimary)
                             .multilineTextAlignment(.center)
 

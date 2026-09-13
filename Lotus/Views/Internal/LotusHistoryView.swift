@@ -94,12 +94,23 @@ struct LotusHistoryView: View {
 
     // MARK: - Colors
 
+    private var activeAccentColor: Color {
+        if !browserState.isPrivate {
+            if browserState.currentProfile.color == .grey {
+                return Color(nsColor: .controlAccentColor)
+            }
+            return browserState.currentProfile.color.color
+        }
+        let accent = LotusAccentColor(rawValue: UserDefaults.standard.string(forKey: "lotus.browser.accentColor") ?? "white") ?? .white
+        return accent.color
+    }
+
     private var foregroundPrimary: Color {
         colorScheme == .dark ? .white : Color(nsColor: .labelColor)
     }
 
     private var foregroundSecondary: Color {
-        colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
+        colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor)
     }
 
     private var foregroundPlaceholder: Color {
@@ -107,15 +118,21 @@ struct LotusHistoryView: View {
     }
 
     private var cardFill: Color {
-        colorScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.03)
+        colorScheme == .dark
+            ? Color.white.opacity(0.05)
+            : Color(nsColor: .controlBackgroundColor)
     }
 
     private var cardStroke: Color {
-        colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.08)
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     private var separatorColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.05)
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     // MARK: - Body
@@ -125,10 +142,10 @@ struct LotusHistoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(.vertical, showsIndicators: true) {
-                LazyVStack(alignment: .leading, spacing: 26) {
+                LazyVStack(alignment: .leading, spacing: 22) {
                     headerSection
-                        .padding(.top, 40)
-                        .padding(.bottom, -4)
+                        .padding(.top, 32)
+                        .padding(.bottom, 4)
 
                     if sections.isEmpty {
                         emptyState
@@ -150,14 +167,18 @@ struct LotusHistoryView: View {
                         Spacer(minLength: 40)
                     }
                 }
-                .frame(maxWidth: 680)
-                .padding(.horizontal, 32)
+                .frame(maxWidth: 640)
+                .padding(.horizontal, 24)
                 .frame(maxWidth: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.clear)
-        .focusEffectDisabled()
+        .tint(activeAccentColor)
+        .accentColor(activeAccentColor)
+        .background(
+            (colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.09) : Color(nsColor: .windowBackgroundColor))
+                .ignoresSafeArea()
+        )
         .transaction { $0.animation = nil }
         .onAppear {
             refreshSections()
@@ -238,39 +259,38 @@ struct LotusHistoryView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 18) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(systemName: "clock")
-                    .font(.system(size: 24, weight: .light))
-                    .foregroundColor(foregroundPrimary)
-
-                VStack(alignment: .leading, spacing: 1) {
+        VStack(spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("History")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 26, weight: .bold))
                         .foregroundColor(foregroundPrimary)
 
-                    Text("\(browserState.historyEntries(for: activeProfileId).count) pages")
-                        .font(.system(size: 12, weight: .regular))
+                    let count = browserState.historyEntries(for: activeProfileId).count
+                    Text("\(count) \(count == 1 ? "page" : "pages") visited")
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(foregroundSecondary)
                 }
 
                 Spacer()
 
-                if isSelecting {
-                    HeaderActionButton(
-                        title: "Delete \(selectedIds.count)",
-                        systemImage: "trash",
-                        isDestructive: true
-                    ) {
-                        browserState.historyConfirmation = .deleteSelected(ids: selectedIds)
-                    }
+                HStack(spacing: 8) {
+                    if isSelecting {
+                        LotusHeaderActionButton(
+                            title: "Delete \(selectedIds.count)",
+                            systemImage: "trash",
+                            isDestructive: true
+                        ) {
+                            browserState.historyConfirmation = .deleteSelected(ids: selectedIds)
+                        }
 
-                    HeaderActionButton(title: "Cancel", systemImage: nil, isDestructive: false) {
-                        selectedIds.removeAll()
-                    }
-                } else if !browserState.historyEntries(for: activeProfileId).isEmpty {
-                    HeaderActionButton(title: "Clear All", systemImage: nil, isDestructive: false) {
-                        browserState.historyConfirmation = .clearAll(totalCount: browserState.historyEntries(for: activeProfileId).count)
+                        LotusHeaderActionButton(title: "Cancel", systemImage: nil, isDestructive: false) {
+                            selectedIds.removeAll()
+                        }
+                    } else if !browserState.historyEntries(for: activeProfileId).isEmpty {
+                        LotusHeaderActionButton(title: "Clear All", systemImage: nil, isDestructive: false) {
+                            browserState.historyConfirmation = .clearAll(totalCount: browserState.historyEntries(for: activeProfileId).count)
+                        }
                     }
                 }
             }
@@ -278,7 +298,7 @@ struct LotusHistoryView: View {
             // Search field
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(foregroundSecondary)
 
                 TextField(
@@ -302,13 +322,13 @@ struct LotusHistoryView: View {
                 }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .frame(height: 42)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(cardFill)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(cardStroke, lineWidth: 1)
             )
         }
@@ -319,9 +339,10 @@ struct LotusHistoryView: View {
     private func daySection(_ section: HistorySection) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(section.title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(foregroundSecondary)
-                .padding(.leading, 14)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(foregroundPrimary)
+                .padding(.leading, 2)
+                .padding(.top, 8)
 
             VStack(spacing: 0) {
                 ForEach(Array(section.items.enumerated()), id: \.element.id) { index, entry in
@@ -356,14 +377,14 @@ struct LotusHistoryView: View {
                 }
             }
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(cardFill)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(cardStroke, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
@@ -442,7 +463,7 @@ private struct HistoryRowView: View {
     }
 
     private var foregroundSecondary: Color {
-        colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
+        colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor)
     }
 
     private var rowHoverFill: Color {
@@ -487,8 +508,24 @@ private struct HistoryRowView: View {
                     }
                 }
 
-                Divider()
-                
+                Spacer(minLength: 12)
+
+                if isHovered && !isSelecting {
+                    Button(action: onDelete) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(Color(nsColor: .systemRed).opacity(0.85))
+                            .padding(6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                    .fill(colorScheme == .dark ? Color.white.opacity(0.10) : Color.black.opacity(0.06))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .help("Delete from History")
+                    .transition(.opacity)
+                }
+
                 Text(LotusDateFormatter.relativeTime(for: entry.visitedAt))
                     .font(.system(size: 11, weight: .regular))
                     .foregroundColor(foregroundSecondary.opacity(0.75))
@@ -523,7 +560,7 @@ private struct SelectionCheckbox: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var foregroundSecondary: Color {
-        colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
+        colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor)
     }
 
     var body: some View {
@@ -548,56 +585,4 @@ private struct SelectionCheckbox: View {
     }
 }
 
-// MARK: - Header Action Button
 
-private struct HeaderActionButton: View {
-    let title: String
-    let systemImage: String?
-    let isDestructive: Bool
-    let action: () -> Void
-
-    @State private var isHovered: Bool = false
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var foreground: Color {
-        if isDestructive {
-            return colorScheme == .dark ? Color(red: 1.0, green: 0.45, blue: 0.42) : Color(red: 0.85, green: 0.15, blue: 0.12)
-        }
-        if isHovered {
-            return colorScheme == .dark ? .white : Color(nsColor: .labelColor)
-        }
-        return colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
-    }
-
-    private var hoverFill: Color {
-        if isDestructive {
-            return colorScheme == .dark ? Color(red: 1.0, green: 0.3, blue: 0.28).opacity(0.15) : Color(red: 0.9, green: 0.2, blue: 0.15).opacity(0.10)
-        }
-        return colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04)
-    }
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 10.5, weight: .semibold))
-                }
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-            }
-            .foregroundColor(foreground)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(isHovered ? hoverFill : Color.clear)
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-    }
-}

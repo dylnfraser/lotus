@@ -30,11 +30,11 @@ struct QuitConfirmationView: View {
             onCancel: { browserState.cancelQuit() }
         ) {
             EmptyView()
-        } actions: {
-            LotusDialogSecondaryButton(title: "Always Quit") {
+        } secondaryActions: {
+            LotusDialogSecondaryButton(title: "Always quit") {
                 browserState.confirmQuit(alwaysQuit: true)
             }
-
+        } actions: {
             LotusDialogCancelButton {
                 browserState.cancelQuit()
             }

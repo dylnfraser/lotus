@@ -18,6 +18,61 @@ extension BrowserState {
         themeColors[tabId]?.isLight ?? false
     }
 
+    /// Resolves the tab's dynamic site theme color (meta theme-color, active DOM background, or extracted favicon color).
+    func effectiveTabTheme(for tabId: UUID) -> (color: Color, isLight: Bool)? {
+        guard let tab = tab(for: tabId), tab.url?.isLotusPage != true else { return nil }
+
+        if let host = tab.url?.host?.lowercased(), host.contains("apple.com") {
+            let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            return (isDark ? .white : .black, !isDark)
+        }
+
+        if let theme = themeColors[tabId] {
+            return (theme.color, theme.isLight)
+        }
+
+        if tabId == selectedTabId, let active = activeThemeColor {
+            return (active, isThemeLight)
+        }
+
+        if let favURL = tab.faviconURL,
+           let nsColor = FaviconColorExtractor.shared.nsColor(for: favURL) {
+            let isLight = ColorParser.isLight(color: nsColor)
+            return (Color(nsColor: nsColor), isLight)
+        }
+
+        return nil
+    }
+
+    /// Computes the effective background color and text contrast for any tab based on tinting mode,
+    /// site theme/favicon color, profile space color, and dark/light appearance.
+    func effectiveTabColor(for tab: TabItem, colorScheme: ColorScheme) -> (color: Color, isLight: Bool) {
+        let isInternal = tab.url?.isLotusPage == true
+        if isInternal {
+            return (Color(nsColor: .windowBackgroundColor), colorScheme == .light)
+        }
+
+        let profile = self.profile(for: tab.profileId ?? self.currentProfileId) ?? self.currentProfile
+        let mode = UserDefaults.standard.string(forKey: "lotus.browser.sidebarTabTintingMode") ?? "adaptive"
+
+        let profileColor = profile.color == .grey ? Color(nsColor: .windowBackgroundColor) : profile.color.color
+        let isProfileLight = (LotusAccentColor(rawValue: profile.color.accentColorEquivalent.rawValue) ?? .white) == .yellow
+
+        switch mode {
+        case "neutral":
+            return (Color(nsColor: .windowBackgroundColor), colorScheme == .light)
+        case "systemAccent":
+            let isLight = profile.color == .grey ? (colorScheme == .light) : isProfileLight
+            return (profileColor, isLight)
+        default: // "adaptive"
+            if let siteTheme = effectiveTabTheme(for: tab.id) {
+                return (siteTheme.color, siteTheme.isLight)
+            }
+            let isLight = profile.color == .grey ? (colorScheme == .light) : isProfileLight
+            return (profileColor, isLight)
+        }
+    }
+
     func updateThemeColor(for tabId: UUID, parsed: ParsedThemeColor) {
         // Late-arriving extractions (e.g. from a page being navigated away
         // from) must not tint a tab that is now on an internal page.

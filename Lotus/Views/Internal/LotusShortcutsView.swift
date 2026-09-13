@@ -39,12 +39,23 @@ struct LotusShortcutsView: View {
 
     // MARK: - Colors
 
+    private var activeAccentColor: Color {
+        if !browserState.isPrivate {
+            if browserState.currentProfile.color == .grey {
+                return Color(nsColor: .controlAccentColor)
+            }
+            return browserState.currentProfile.color.color
+        }
+        let accent = LotusAccentColor(rawValue: UserDefaults.standard.string(forKey: "lotus.browser.accentColor") ?? "white") ?? .white
+        return accent.color
+    }
+
     private var foregroundPrimary: Color {
         colorScheme == .dark ? .white : Color(nsColor: .labelColor)
     }
 
     private var foregroundSecondary: Color {
-        colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
+        colorScheme == .dark ? .white.opacity(0.48) : Color(nsColor: .secondaryLabelColor)
     }
 
     private var foregroundPlaceholder: Color {
@@ -52,15 +63,21 @@ struct LotusShortcutsView: View {
     }
 
     private var cardFill: Color {
-        colorScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.03)
+        colorScheme == .dark
+            ? Color.white.opacity(0.05)
+            : Color(nsColor: .controlBackgroundColor)
     }
 
     private var cardStroke: Color {
-        colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.08)
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     private var separatorColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.05)
+        colorScheme == .dark
+            ? Color.white.opacity(0.06)
+            : Color.black.opacity(0.06)
     }
 
     // MARK: - Body
@@ -68,10 +85,10 @@ struct LotusShortcutsView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(.vertical, showsIndicators: true) {
-                LazyVStack(alignment: .leading, spacing: 26) {
+                LazyVStack(alignment: .leading, spacing: 22) {
                     headerSection
-                        .padding(.top, 40)
-                        .padding(.bottom, -4)
+                        .padding(.top, 32)
+                        .padding(.bottom, 4)
 
                     if filteredCategories.isEmpty {
                         emptyState
@@ -84,40 +101,40 @@ struct LotusShortcutsView: View {
                         Spacer(minLength: 40)
                     }
                 }
-                .frame(maxWidth: 680)
-                .padding(.horizontal, 32)
+                .frame(maxWidth: 640)
+                .padding(.horizontal, 24)
                 .frame(maxWidth: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.clear)
-        .focusEffectDisabled()
+        .tint(activeAccentColor)
+        .accentColor(activeAccentColor)
+        .background(
+            (colorScheme == .dark ? Color(red: 0.08, green: 0.08, blue: 0.09) : Color(nsColor: .windowBackgroundColor))
+                .ignoresSafeArea()
+        )
         .transaction { $0.animation = nil }
     }
 
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 18) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(systemName: "keyboard")
-                    .font(.system(size: 24, weight: .light))
-                    .foregroundColor(foregroundPrimary)
-
-                VStack(alignment: .leading, spacing: 1) {
+        VStack(spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Keyboard Shortcuts")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 26, weight: .bold))
                         .foregroundColor(foregroundPrimary)
 
                     Text("\(totalShortcutsCount) shortcuts\(shortcutManager.overrides.isEmpty ? "" : " • \(shortcutManager.overrides.count) customized")")
-                        .font(.system(size: 12, weight: .regular))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(foregroundSecondary)
                 }
 
                 Spacer()
 
                 if !shortcutManager.overrides.isEmpty {
-                    ShortcutHeaderActionButton(
+                    LotusHeaderActionButton(
                         title: "Reset All",
                         systemImage: "arrow.counterclockwise",
                         isDestructive: false
@@ -130,7 +147,7 @@ struct LotusShortcutsView: View {
             // Search field
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(foregroundSecondary)
 
                 TextField(
@@ -154,13 +171,13 @@ struct LotusShortcutsView: View {
                 }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .frame(height: 42)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(cardFill)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(cardStroke, lineWidth: 1)
             )
         }
@@ -171,9 +188,10 @@ struct LotusShortcutsView: View {
     private func categorySection(_ category: ShortcutCategory) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(category.title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(foregroundSecondary)
-                .padding(.leading, 14)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(foregroundPrimary)
+                .padding(.leading, 2)
+                .padding(.top, 8)
 
             VStack(spacing: 0) {
                 ForEach(Array(category.items.enumerated()), id: \.element.id) { index, item in
@@ -192,14 +210,14 @@ struct LotusShortcutsView: View {
                 }
             }
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(cardFill)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(cardStroke, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
@@ -307,7 +325,7 @@ struct ShortcutRecorderPill: View {
                             .foregroundColor(.accentColor)
                     } else {
                         Text(currentDisplay)
-                            .font(.system(size: 11.5, weight: .semibold, design: .monospaced))
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
                             .foregroundColor(isOverridden ? .accentColor : (colorScheme == .dark ? .white.opacity(0.85) : .primary))
                     }
                 }
@@ -403,56 +421,4 @@ struct ShortcutRecorderPill: View {
     }
 }
 
-// MARK: - Shortcut Header Action Button
 
-private struct ShortcutHeaderActionButton: View {
-    let title: String
-    let systemImage: String?
-    let isDestructive: Bool
-    let action: () -> Void
-
-    @State private var isHovered: Bool = false
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var foreground: Color {
-        if isDestructive {
-            return colorScheme == .dark ? Color(red: 1.0, green: 0.45, blue: 0.42) : Color(red: 0.85, green: 0.15, blue: 0.12)
-        }
-        if isHovered {
-            return colorScheme == .dark ? .white : Color(nsColor: .labelColor)
-        }
-        return colorScheme == .dark ? .white.opacity(0.45) : Color(nsColor: .secondaryLabelColor)
-    }
-
-    private var hoverFill: Color {
-        if isDestructive {
-            return colorScheme == .dark ? Color(red: 1.0, green: 0.3, blue: 0.28).opacity(0.15) : Color(red: 0.9, green: 0.2, blue: 0.15).opacity(0.10)
-        }
-        return colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.04)
-    }
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 10.5, weight: .semibold))
-                }
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-            }
-            .foregroundColor(foreground)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(isHovered ? hoverFill : Color.clear)
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-    }
-}

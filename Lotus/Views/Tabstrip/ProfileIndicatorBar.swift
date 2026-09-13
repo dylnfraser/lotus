@@ -12,8 +12,6 @@ struct ProfileIndicatorBar: View {
     @ObservedObject var browserState: BrowserState
     @Environment(\.colorScheme) private var colorScheme
     @State private var hoveredProfileId: UUID? = nil
-    @State private var isCreateProfileSheetPresented: Bool = false
-    @State private var profileToEdit: Profile? = nil
 
     var body: some View {
         if browserState.profiles.count > 1 {
@@ -59,10 +57,10 @@ struct ProfileIndicatorBar: View {
                         }
                         Divider()
                         Button("New Space…") {
-                            isCreateProfileSheetPresented = true
+                            browserState.openCreateProfile()
                         }
                         Button("Edit Space…") {
-                            profileToEdit = profile
+                            browserState.openProfileEditor(for: profile)
                         }
                         Button("Manage Profiles…") {
                             browserState.openSettingsPage()
@@ -79,35 +77,6 @@ struct ProfileIndicatorBar: View {
             .frame(maxWidth: .infinity, alignment: .center)
             .frame(height: 26)
             .padding(.bottom, 6)
-            .sheet(isPresented: $isCreateProfileSheetPresented) {
-                CreateProfileModalView(
-                    onSave: { newName, newIcon, newColor in
-                        let created = browserState.createProfile(name: newName, icon: newIcon, color: newColor)
-                        browserState.switchProfile(to: created.id, direction: .forward)
-                        isCreateProfileSheetPresented = false
-                    },
-                    onCancel: {
-                        isCreateProfileSheetPresented = false
-                    }
-                )
-            }
-            .sheet(item: $profileToEdit) { profile in
-                EditProfileModalView(
-                    profile: profile,
-                    canDelete: browserState.canDeleteProfile(profile),
-                    onSave: { updated in
-                        browserState.updateProfile(updated)
-                        profileToEdit = nil
-                    },
-                    onDelete: { toDelete in
-                        profileToEdit = nil
-                        browserState.requestDeleteProfile(toDelete)
-                    },
-                    onCancel: {
-                        profileToEdit = nil
-                    }
-                )
-            }
         }
     }
 }
